@@ -52,7 +52,16 @@ jobs:
       - name: Build Go Backend (Shared Library)
         run: |
           cd backend
-          go build -buildmode=c-shared -o ${{ matrix.backend_lib }} main.go
+          if [[ "${{ matrix.platform }}" == "macos" ]]; then
+            # Build for ARM64
+            GOOS=darwin GOARCH=arm64 go build -buildmode=c-shared -o libbackend_arm64.dylib main.go
+            # Build for AMD64 (Intel)
+            GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -o libbackend_amd64.dylib main.go
+            # Create Universal Binary
+            lipo -create -output ${{ matrix.backend_lib }} libbackend_arm64.dylib libbackend_amd64.dylib
+          else
+            go build -buildmode=c-shared -o ${{ matrix.backend_lib }} main.go
+          fi
 
       - name: Download ONNX Runtime
         shell: bash

@@ -12,13 +12,18 @@ Ensure you have the following installed:
 
 ## 2. Build the Backend Shared Library
 
-The Go backend must be compiled into a `.dylib` for macOS:
+The Go backend should be compiled as a **Universal Binary** to support both Intel and Apple Silicon Macs:
 
 ```bash
 cd backend
-# Compile the Go shared library
-go build -buildmode=c-shared -o libbackend.dylib main.go
+# Build for Apple Silicon
+GOOS=darwin GOARCH=arm64 go build -buildmode=c-shared -o libbackend_arm64.dylib main.go
+# Build for Intel
+GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -o libbackend_amd64.dylib main.go
+# Merge into a Universal Binary
+lipo -create -output libbackend.dylib libbackend_arm64.dylib libbackend_amd64.dylib
 ```
+
 
 ## 3. Prepare the Flutter App
 
