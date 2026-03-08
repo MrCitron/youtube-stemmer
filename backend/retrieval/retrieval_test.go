@@ -28,7 +28,7 @@ func TestDownloadAudio(t *testing.T) {
 	tmpDir := t.TempDir()
 	outputPath := filepath.Join(tmpDir, "audio.mp4") // youtube-dl often downloads m4a/mp4 container
 
-	err := DownloadAudio(url, outputPath)
+	err := DownloadAudio(url, outputPath, nil)
 	if err != nil {
 		t.Errorf("DownloadAudio failed: %v", err)
 	}
