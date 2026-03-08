@@ -35,7 +35,13 @@ typedef CreateZip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Poin
 typedef CreateMp3ZipFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
 typedef CreateMp3Zip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
 
+typedef FreeStringFunc = ffi.Void Function(ffi.Pointer<Utf8> str);
+typedef FreeString = void Function(ffi.Pointer<Utf8> str);
+
 class BackendFFI {
+  static final BackendFFI _instance = BackendFFI._internal();
+  factory BackendFFI() => _instance;
+
   late final ffi.DynamicLibrary _lib;
   late final HelloWorld _helloWorld;
   late final GetMetadata _getMetadata;
@@ -45,8 +51,9 @@ class BackendFFI {
   late final MixStems _mixStems;
   late final CreateZip _createZip;
   late final CreateMp3Zip _createMp3Zip;
+  late final FreeString _freeString;
 
-  BackendFFI() {
+  BackendFFI._internal() {
     final libPath = _getLibraryPath();
     _lib = ffi.DynamicLibrary.open(libPath);
 
@@ -65,6 +72,8 @@ class BackendFFI {
     _createZip = _lib.lookup<ffi.NativeFunction<CreateZipFunc>>('CreateZip').asFunction();
 
     _createMp3Zip = _lib.lookup<ffi.NativeFunction<CreateMp3ZipFunc>>('CreateMp3Zip').asFunction();
+
+    _freeString = _lib.lookup<ffi.NativeFunction<FreeStringFunc>>('FreeString').asFunction();
   }
 
   void helloWorld() => _helloWorld();
@@ -77,6 +86,7 @@ class BackendFFI {
         return "Error: Go library returned a null pointer for metadata";
       }
       final res = resPtr.toDartString();
+      _freeString(resPtr);
       return res;
     } catch (e) {
       return "Error: FFI call failed: $e";
@@ -101,7 +111,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(urlPtr);
       malloc.free(pathPtr);
@@ -117,7 +129,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(modelPtr);
       malloc.free(libPtr);
@@ -142,7 +156,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(inputPtr);
       malloc.free(outputPtr);
@@ -164,7 +180,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(pathsPtr);
       malloc.free(weightsPtr);
@@ -181,7 +199,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(pathsPtr);
       malloc.free(outPtr);
@@ -197,7 +217,9 @@ class BackendFFI {
       if (resPtr == ffi.nullptr) {
         return null; // Success
       }
-      return resPtr.toDartString(); // Error message
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
     } finally {
       malloc.free(pathsPtr);
       malloc.free(outPtr);

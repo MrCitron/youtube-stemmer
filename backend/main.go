@@ -134,6 +134,11 @@ func DownloadAudio(url *C.char, outputPath *C.char, cb C.ProgressCallback) *C.ch
 	return nil // Success
 }
 
+//export FreeString
+func FreeString(str *C.char) {
+	C.free(unsafe.Pointer(str))
+}
+
 func main() {
 	// Required for c-shared build
 }

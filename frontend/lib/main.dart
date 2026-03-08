@@ -139,8 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       // 1. Get Metadata
       debugPrint('Fetching metadata for: $url');
-      final backend = BackendFFI();
-      final metadata = backend.getMetadata(url);
+      final metadata = await compute(_getMetadataCompute, url);
       debugPrint('Metadata result: $metadata');
       
       if (metadata.startsWith('Error:')) {
