@@ -23,7 +23,7 @@ jobs:
             platform: macos
             backend_lib: libbackend.dylib
             onnx_lib: libonnxruntime.dylib
-            onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-universal-1.17.1.tgz
+            onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-universal2-1.17.1.tgz
           - os: windows-latest
             platform: windows
             backend_lib: libbackend.dll
@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p onnx_temp
-          curl -L ${{ matrix.onnx_url }} -o onnx_archive
+          curl -Lf ${{ matrix.onnx_url }} -o onnx_archive
           if [[ "${{ matrix.platform }}" == "windows" ]]; then
             unzip onnx_archive -d onnx_temp
             find onnx_temp -name "${{ matrix.onnx_lib }}" -exec cp {} . \;
