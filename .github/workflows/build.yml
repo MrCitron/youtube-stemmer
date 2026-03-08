@@ -96,24 +96,24 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           cd frontend/build/linux/x64/release/bundle
-          cp ../../../../../backend/${{ matrix.backend_lib }} .
-          cp ../../../../../backend/${{ matrix.onnx_lib }} .
-          tar -czf ../../../../../youtube-stemmer-linux.tar.gz .
+          cp $GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} .
+          cp $GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} .
+          tar -czf $GITHUB_WORKSPACE/youtube-stemmer-linux.tar.gz .
 
       - name: Package Artifacts (Windows)
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           cd frontend/build/windows/x64/runner/Release
-          Copy-Item ../../../../../backend/${{ matrix.backend_lib }} .
-          Copy-Item ../../../../../backend/${{ matrix.onnx_lib }} .
-          Compress-Archive -Path * -DestinationPath ../../../../../youtube-stemmer-windows.zip
+          Copy-Item $env:GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} .
+          Copy-Item $env:GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} .
+          Compress-Archive -Path * -DestinationPath $env:GITHUB_WORKSPACE/youtube-stemmer-windows.zip
 
       - name: Package Artifacts (MacOS)
         if: matrix.platform == 'macos'
         run: |
           cd frontend/build/macos/Build/Products/Release/
-          zip -r ../../../../../youtube-stemmer-macos.zip "youtube_stemmer.app"
+          zip -r $GITHUB_WORKSPACE/youtube-stemmer-macos.zip "youtube_stemmer.app"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
