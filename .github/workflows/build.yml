@@ -61,17 +61,17 @@ jobs:
           ANY_CHANGED="false"
           
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.filter.outputs.linux }}" == "true" ]]; then
-            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"ubuntu-latest","platform":"linux","backend_lib":"libbackend.so","onnx_lib":"libonnxruntime.so","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-linux-x64-1.17.1.tgz"}]')
+            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"ubuntu-latest","platform":"linux","backend_lib":"libbackend.so","onnx_lib":"libonnxruntime.so","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-linux-x64-1.20.1.tgz"}]')
             ANY_CHANGED="true"
           fi
           
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.filter.outputs.macos }}" == "true" ]]; then
-            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"macos-latest","platform":"macos","backend_lib":"libbackend.dylib","onnx_lib":"libonnxruntime.dylib","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-universal2-1.17.1.tgz"}]')
+            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"macos-latest","platform":"macos","backend_lib":"libbackend.dylib","onnx_lib":"libonnxruntime.dylib","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-osx-universal2-1.20.1.tgz"}]')
             ANY_CHANGED="true"
           fi
           
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.filter.outputs.windows }}" == "true" ]]; then
-            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"windows-latest","platform":"windows","backend_lib":"libbackend.dll","onnx_lib":"onnxruntime.dll","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip"}]')
+            MATRIX=$(echo $MATRIX | jq -c '.include += [{"os":"windows-latest","platform":"windows","backend_lib":"libbackend.dll","onnx_lib":"onnxruntime.dll","onnx_url":"https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-win-x64-1.20.1.zip"}]')
             ANY_CHANGED="true"
           fi
           
