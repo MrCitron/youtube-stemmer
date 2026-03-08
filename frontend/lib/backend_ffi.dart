@@ -73,8 +73,13 @@ class BackendFFI {
     final urlPtr = url.toNativeUtf8();
     try {
       final resPtr = _getMetadata(urlPtr);
+      if (resPtr == ffi.nullptr) {
+        return "Error: Go library returned a null pointer for metadata";
+      }
       final res = resPtr.toDartString();
       return res;
+    } catch (e) {
+      return "Error: FFI call failed: $e";
     } finally {
       malloc.free(urlPtr);
     }
@@ -210,7 +215,15 @@ class BackendFFI {
       return portablePath;
     }
 
-    // 2. Check in a 'lib' subdirectory (common for Linux bundles)
+    // 2. Check in Contents/Frameworks/ (for macOS bundles)
+    if (Platform.isMacOS) {
+      final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
+      if (File(frameworksPath).existsSync()) {
+        return frameworksPath;
+      }
+    }
+
+    // 3. Check in a 'lib' subdirectory (common for Linux bundles)
     final libSubPath = p.join(exeDir, 'lib', libName);
     if (File(libSubPath).existsSync()) {
       return libSubPath;
@@ -244,7 +257,15 @@ class BackendFFI {
       return portablePath;
     }
 
-    // 2. Check in 'lib'
+    // 2. Check in Contents/Frameworks/ (for macOS)
+    if (Platform.isMacOS) {
+      final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
+      if (File(frameworksPath).existsSync()) {
+        return frameworksPath;
+      }
+    }
+
+    // 3. Check in 'lib'
     final libSubPath = p.join(exeDir, 'lib', libName);
     if (File(libSubPath).existsSync()) {
       return libSubPath;
