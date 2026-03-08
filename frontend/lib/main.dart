@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'dart:isolate';
 import 'package:file_picker/file_picker.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -76,6 +77,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _urlController = TextEditingController();
   bool _isProcessing = false;
+  String? _errorMessage;
   String? _stemsDirectory;
   String? _videoTitle;
   List<String>? _stemNames;
@@ -134,6 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _stemmingProgress = 0;
       _downloadEta = null;
       _stemmingEta = null;
+      _errorMessage = null;
     });
 
     try {
@@ -320,9 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Processing failed: $e')),
-          );
+          setState(() => _errorMessage = 'Processing failed: $e');
         }
       }
     } finally {
@@ -431,6 +432,41 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              if (_errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Error', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => setState(() => _errorMessage = null),
+                          ),
+                        ],
+                      ),
+                      SelectableText(_errorMessage!),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: _errorMessage!));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error copied to clipboard')));
+                        },
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy Message'),
+                      ),
+                    ],
+                  ),
+                ),
               TextField(
                 controller: _urlController,
                 decoration: const InputDecoration(
