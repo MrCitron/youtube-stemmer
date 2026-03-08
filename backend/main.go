@@ -108,8 +108,19 @@ func SplitAudio(inputPath *C.char, outputDir *C.char, stemNames *C.char, cb C.Pr
 	return nil
 }
 
+//export CheckStatus
+func CheckStatus() *C.char {
+	return C.CString("Go backend is alive and well")
+}
+
 //export GetMetadata
 func GetMetadata(url *C.char) *C.char {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Go: Panic in GetMetadata: %v\n", r)
+		}
+	}()
+	
 	goUrl := C.GoString(url)
 	metadata, err := retrieval.GetVideoMetadata(goUrl)
 	if err != nil {

@@ -52,6 +52,7 @@ class BackendFFI {
   late final CreateZip _createZip;
   late final CreateMp3Zip _createMp3Zip;
   late final FreeString _freeString;
+  late final GetMetadata _checkStatus;
 
   BackendFFI._internal() {
     final libPath = _getLibraryPath();
@@ -74,9 +75,23 @@ class BackendFFI {
     _createMp3Zip = _lib.lookup<ffi.NativeFunction<CreateMp3ZipFunc>>('CreateMp3Zip').asFunction();
 
     _freeString = _lib.lookup<ffi.NativeFunction<FreeStringFunc>>('FreeString').asFunction();
+
+    _checkStatus = _lib.lookup<ffi.NativeFunction<GetMetadataFunc>>('CheckStatus').asFunction();
   }
 
   void helloWorld() => _helloWorld();
+
+  String checkStatus() {
+    try {
+      final resPtr = _checkStatus(ffi.nullptr);
+      if (resPtr == ffi.nullptr) return "Error: Null from CheckStatus";
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
+    } catch (e) {
+      return "Error: $e";
+    }
+  }
 
   String getMetadata(String url) {
     final urlPtr = url.toNativeUtf8();
