@@ -585,11 +585,19 @@ void _splitAudioIsolate(Map<String, dynamic> params) {
   final libPath = BackendFFI.getOnnxRuntimePath();
   final stemNames = List<String>.from(params['stemNames']);
   
+  // ignore: avoid_print
+  print('GoIsolate: Starting initStemmer with model=$modelPath, lib=$libPath');
+  
   final initError = backend.initStemmer(modelPath, libPath);
   if (initError != null) {
+    // ignore: avoid_print
+    print('GoIsolate: initStemmer failed: $initError');
     sendPort.send(initError);
     return;
   }
+  
+  // ignore: avoid_print
+  print('GoIsolate: initStemmer success, starting splitAudio');
   
   final error = backend.splitAudio(
     params['input'], 
