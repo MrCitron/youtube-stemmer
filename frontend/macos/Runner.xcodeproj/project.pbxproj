@@ -21,6 +21,9 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		380000012B9B0001 /* libbackend.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 380000012B9B0000 /* libbackend.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		380000032B9B0001 /* libonnxruntime.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 380000032B9B0000 /* libonnxruntime.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+
 		331C80D8294CF71000263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C80D7294CF71000263BE5 /* RunnerTests.swift */; };
 		335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335BBD1A22A9A15E00E9071D /* GeneratedPluginRegistrant.swift */; };
 		33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC10F02044A3C60003C045 /* AppDelegate.swift */; };
@@ -53,6 +56,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				380000012B9B0001 /* libbackend.dylib in Frameworks */,
+				380000032B9B0001 /* libonnxruntime.dylib in Frameworks */,
 			);
 			name = "Bundle Framework";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -60,6 +65,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		380000012B9B0000 /* libbackend.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libbackend.dylib; sourceTree = "<group>"; };
+		380000032B9B0000 /* libonnxruntime.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libonnxruntime.dylib; sourceTree = "<group>"; };
+
 		331C80D5294CF71000263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		331C80D7294CF71000263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		333000ED22D3DE5D00554162 /* Warnings.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Warnings.xcconfig; sourceTree = "<group>"; };
@@ -175,6 +183,8 @@
 		D73912EC22F37F3D000D13A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				380000012B9B0000 /* libbackend.dylib */,
+				380000032B9B0000 /* libonnxruntime.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
