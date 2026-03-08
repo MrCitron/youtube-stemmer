@@ -111,6 +111,7 @@ jobs:
         run: |
           cd backend
           if [[ "${{ matrix.platform }}" == "macos" ]]; then
+            export MACOSX_DEPLOYMENT_TARGET=11.0
             # Build for ARM64
             GOOS=darwin GOARCH=arm64 go build -buildmode=c-shared -o libbackend_arm64.dylib main.go
             # Build for AMD64 (Intel)
