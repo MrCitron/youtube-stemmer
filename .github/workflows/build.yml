@@ -1,0 +1,122 @@
+name: Build & Package Desktop
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            backend_lib: libbackend.so
+            onnx_lib: libonnxruntime.so
+            onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-linux-x64-1.17.1.tgz
+          - os: macos-latest
+            platform: macos
+            backend_lib: libbackend.dylib
+            onnx_lib: libonnxruntime.dylib
+            onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-osx-universal-1.17.1.tgz
+          - os: windows-latest
+            platform: windows
+            backend_lib: libbackend.dll
+            onnx_lib: onnxruntime.dll
+            onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Linux Dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libgtk-3-dev libblkid-dev liblzma-dev libnm-dev libsecret-1-dev
+
+      - name: Build Go Backend (Shared Library)
+        run: |
+          cd backend
+          go build -buildmode=c-shared -o ${{ matrix.backend_lib }} main.go
+
+      - name: Download ONNX Runtime
+        shell: bash
+        run: |
+          mkdir -p onnx_temp
+          curl -L ${{ matrix.onnx_url }} -o onnx_archive
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then
+            unzip onnx_archive -d onnx_temp
+            find onnx_temp -name "${{ matrix.onnx_lib }}" -exec cp {} . \;
+          else
+            tar -xzf onnx_archive -C onnx_temp
+            find onnx_temp -name "${{ matrix.onnx_lib }}" -exec cp {} . \;
+          fi
+          mv ${{ matrix.onnx_lib }} backend/
+
+      - name: Prepare Frontend (MacOS)
+        if: matrix.platform == 'macos'
+        run: |
+          cp backend/${{ matrix.backend_lib }} frontend/macos/
+          cp backend/${{ matrix.onnx_lib }} frontend/macos/
+
+      - name: Prepare Frontend (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          cp backend/${{ matrix.backend_lib }} frontend/windows/
+          cp backend/${{ matrix.onnx_lib }} frontend/windows/
+
+      - name: Prepare Frontend (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          cp backend/${{ matrix.backend_lib }} frontend/linux/
+          cp backend/${{ matrix.onnx_lib }} frontend/linux/
+
+      - name: Build Flutter App
+        run: |
+          cd frontend
+          flutter pub get
+          flutter build ${{ matrix.platform }} --release
+
+      - name: Package Artifacts (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          cd frontend/build/linux/x64/release/bundle
+          cp ../../../../../backend/${{ matrix.backend_lib }} .
+          cp ../../../../../backend/${{ matrix.onnx_lib }} .
+          tar -czf ../../../../../youtube-stemmer-linux.tar.gz .
+
+      - name: Package Artifacts (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          cd frontend/build/windows/x64/runner/Release
+          Copy-Item ../../../../../backend/${{ matrix.backend_lib }} .
+          Copy-Item ../../../../../backend/${{ matrix.onnx_lib }} .
+          Compress-Archive -Path * -DestinationPath ../../../../../youtube-stemmer-windows.zip
+
+      - name: Package Artifacts (MacOS)
+        if: matrix.platform == 'macos'
+        run: |
+          cd frontend/build/macos/Build/Products/Release/
+          zip -r ../../../../../youtube-stemmer-macos.zip "youtube_stemmer.app"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-stemmer-${{ matrix.platform }}
+          path: youtube-stemmer-${{ matrix.platform }}.*

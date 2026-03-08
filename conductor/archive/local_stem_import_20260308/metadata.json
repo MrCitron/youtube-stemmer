@@ -1,0 +1,8 @@
+{
+  "track_id": "local_stem_import_20260308",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-08T00:00:00Z",
+  "updated_at": "2026-03-08T00:00:00Z",
+  "description": "Enable loading local folders containing stems directly into the mixer for playback."
+}

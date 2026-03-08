@@ -1,0 +1,48 @@
+# General
+.idea/
+.vscode/
+*.log
+*.bak
+*.tmp
+*.temp
+
+# Backend (Go)
+backend/venv/
+backend/__pycache__/
+backend/build/
+backend/test_stems/
+backend/libbackend.h
+backend/libbackend.so
+backend/libbackend.dylib
+backend/libbackend.dll
+backend/libonnxruntime.so
+backend/onnxruntime.dll
+backend/models/*.onnx
+backend/test_input.wav
+backend/original_audio.mp4
+
+# Frontend (Flutter)
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub-cache/
+frontend/.pub/
+frontend/pubspec.lock
+frontend/macos/libbackend.dylib
+frontend/macos/libonnxruntime.dylib
+frontend/windows/libbackend.dll
+frontend/windows/onnxruntime.dll
+frontend/linux/libbackend.so
+frontend/linux/libonnxruntime.so
+
+# Media & Exports
+*.wav
+*.mp3
+*.m4a
+*.zip
+onnx_exports/
+venv_export/
+
+# Secrets
+hf_token
+.env

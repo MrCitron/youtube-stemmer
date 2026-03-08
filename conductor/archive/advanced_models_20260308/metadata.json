@@ -1,0 +1,8 @@
+{
+  "track_id": "advanced_models_20260308",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-08T00:00:00Z",
+  "updated_at": "2026-03-08T00:00:00Z",
+  "description": "Support for advanced AI model selection, including 4-track, 6-track, and fine-tuned models."
+}
