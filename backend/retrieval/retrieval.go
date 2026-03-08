@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"github.com/kkdai/youtube/v2"
 )
 
@@ -42,6 +43,12 @@ func DownloadAudio(url, outputPath string, onProgress func(float64)) error {
 		return err
 	}
 	defer stream.Close()
+
+	// Ensure the parent directory exists
+	parentDir := filepath.Dir(outputPath)
+	if err := os.MkdirAll(parentDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %v", parentDir, err)
+	}
 
 	file, err := os.Create(outputPath)
 	if err != nil {

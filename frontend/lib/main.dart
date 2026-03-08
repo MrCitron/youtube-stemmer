@@ -211,6 +211,11 @@ class _MyHomePageState extends State<MyHomePage> {
       // 2. Download Audio
       final tempDir = await getTemporaryDirectory();
       final downloadPath = p.join(tempDir.path, 'original_audio.mp4');
+      
+      // Ensure temp directory exists
+      if (!await tempDir.exists()) {
+        await tempDir.create(recursive: true);
+      }
 
       final receivePort = ReceivePort();
       final downloadTracker = ProgressTracker();
