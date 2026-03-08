@@ -1,6 +1,6 @@
 module github.com/metin/youtube-stemmer/backend
 
-go 1.26.1
+go 1.20
 
 require (
 	github.com/bitly/go-simplejson v0.5.1 // indirect
