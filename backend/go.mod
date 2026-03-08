@@ -1,6 +1,6 @@
 module github.com/metin/youtube-stemmer/backend
 
-go 1.21.0
+go 1.22.0
 
 require (
 	github.com/braheezy/shine-mp3 v0.1.0
