@@ -1,12 +1,12 @@
 module github.com/metin/youtube-stemmer/backend
 
-go 1.25.5
+go 1.21.0
 
 require (
 	github.com/braheezy/shine-mp3 v0.1.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
-	github.com/kkdai/youtube/v2 v2.10.5
+	github.com/kkdai/youtube/v2 v2.10.1
 	github.com/madelynnblue/go-dsp v1.0.0
 	github.com/yalue/onnxruntime_go v1.26.0
 )
