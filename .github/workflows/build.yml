@@ -112,12 +112,14 @@ jobs:
           cd backend
           if [[ "${{ matrix.platform }}" == "macos" ]]; then
             export MACOSX_DEPLOYMENT_TARGET=11.0
-            export CGO_CFLAGS="-mmacosx-version-min=11.0"
-            export CGO_LDFLAGS="-mmacosx-version-min=11.0"
             # Build for ARM64
-            GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=c-shared -o libbackend_arm64.dylib main.go
+            GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=c-shared \
+              -ldflags="-linkmode=external -extldflags='-mmacosx-version-min=11.0'" \
+              -o libbackend_arm64.dylib main.go
             # Build for AMD64 (Intel)
-            GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -o libbackend_amd64.dylib main.go
+            GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared \
+              -ldflags="-linkmode=external -extldflags='-mmacosx-version-min=11.0'" \
+              -o libbackend_amd64.dylib main.go
             # Create Universal Binary
             lipo -create -output ${{ matrix.backend_lib }} libbackend_arm64.dylib libbackend_amd64.dylib
           else
