@@ -252,7 +252,7 @@ class BackendFFI {
       return portablePath;
     }
 
-    // 2. Check in Contents/Frameworks/ (for macOS bundles)
+    // 3. Check in Contents/Frameworks/ (for macOS bundles)
     if (Platform.isMacOS) {
       final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
       if (File(frameworksPath).existsSync()) {
@@ -260,7 +260,20 @@ class BackendFFI {
       }
     }
 
-    // 3. Check in a 'lib' subdirectory (common for Linux bundles)
+    // 4. Check in local development folder
+    final projectRoot = p.dirname(p.dirname(exePath));
+    final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
+    if (File(devPath).existsSync()) {
+      return devPath;
+    }
+
+    // 5. Check in backend/ folder (for local dev)
+    final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
+    if (File(rootBackendPath).existsSync()) {
+      return rootBackendPath;
+    }
+
+    // 6. Check in a 'lib' subdirectory
     final libSubPath = p.join(exeDir, 'lib', libName);
     if (File(libSubPath).existsSync()) {
       return libSubPath;
@@ -302,7 +315,20 @@ class BackendFFI {
       }
     }
 
-    // 3. Check in 'lib'
+    // 3. Check in local development folder
+    final projectRoot = p.dirname(p.dirname(Platform.resolvedExecutable));
+    final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
+    if (File(devPath).existsSync()) {
+      return devPath;
+    }
+
+    // 4. Check in backend/ folder
+    final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
+    if (File(rootBackendPath).existsSync()) {
+      return rootBackendPath;
+    }
+
+    // 5. Check in 'lib'
     final libSubPath = p.join(exeDir, 'lib', libName);
     if (File(libSubPath).existsSync()) {
       return libSubPath;
