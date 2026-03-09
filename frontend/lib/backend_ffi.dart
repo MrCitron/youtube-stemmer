@@ -12,22 +12,44 @@ typedef GetMetadata = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> url);
 typedef ProgressCallbackFunc = ffi.Void Function(ffi.Double progress);
 
 typedef DownloadAudioFunc = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> url, ffi.Pointer<Utf8> outputPath, ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb);
+  ffi.Pointer<Utf8> url,
+  ffi.Pointer<Utf8> outputPath,
+  ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb,
+);
 typedef DownloadAudio = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> url, ffi.Pointer<Utf8> outputPath, ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb);
+  ffi.Pointer<Utf8> url,
+  ffi.Pointer<Utf8> outputPath,
+  ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb,
+);
 
-typedef InitStemmerFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> modelPath, ffi.Pointer<Utf8> sharedLibPath);
-typedef InitStemmer = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> modelPath, ffi.Pointer<Utf8> sharedLibPath);
+typedef InitStemmerFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> modelPath, ffi.Pointer<Utf8> libPath);
+typedef InitStemmer = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> modelPath, ffi.Pointer<Utf8> libPath);
 
 typedef SplitAudioFunc = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> inputPath, ffi.Pointer<Utf8> outputDir, ffi.Pointer<Utf8> stemNames, ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb);
+  ffi.Pointer<Utf8> inputPath,
+  ffi.Pointer<Utf8> outputDir,
+  ffi.Pointer<Utf8> stemNames,
+  ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb,
+);
 typedef SplitAudio = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> inputPath, ffi.Pointer<Utf8> outputDir, ffi.Pointer<Utf8> stemNames, ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb);
+  ffi.Pointer<Utf8> inputPath,
+  ffi.Pointer<Utf8> outputDir,
+  ffi.Pointer<Utf8> stemNames,
+  ffi.Pointer<ffi.NativeFunction<ProgressCallbackFunc>> cb,
+);
 
 typedef MixStemsFunc = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> paths, ffi.Pointer<ffi.Double> weights, ffi.Int32 count, ffi.Pointer<Utf8> outputPath);
+  ffi.Pointer<Utf8> paths,
+  ffi.Pointer<ffi.Double> weights,
+  ffi.IntPtr weightsLen,
+  ffi.Pointer<Utf8> outputPath,
+);
 typedef MixStems = ffi.Pointer<Utf8> Function(
-    ffi.Pointer<Utf8> paths, ffi.Pointer<ffi.Double> weights, int count, ffi.Pointer<Utf8> outputPath);
+  ffi.Pointer<Utf8> paths,
+  ffi.Pointer<ffi.Double> weights,
+  int weightsLen,
+  ffi.Pointer<Utf8> outputPath,
+);
 
 typedef CreateZipFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
 typedef CreateZip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
@@ -244,109 +266,54 @@ class BackendFFI {
   static String _getLibraryPath() {
     final String libName = _getBackendLibraryName();
 
-    // 1. Check next to the executable (for portable bundles)
-    final exePath = Platform.resolvedExecutable;
-    final exeDir = p.dirname(exePath);
+    // 1. Check next to the executable
+    final exeDir = p.dirname(Platform.resolvedExecutable);
     final portablePath = p.join(exeDir, libName);
-    if (File(portablePath).existsSync()) {
-      return portablePath;
-    }
+    if (File(portablePath).existsSync()) return portablePath;
 
-    // 3. Check in Contents/Frameworks/ (for macOS bundles)
+    // 2. Check in Contents/Frameworks/ (macOS)
     if (Platform.isMacOS) {
       final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
-      if (File(frameworksPath).existsSync()) {
-        return frameworksPath;
-      }
+      if (File(frameworksPath).existsSync()) return frameworksPath;
     }
 
-    // 4. Check in local development folder
-    final projectRoot = p.dirname(p.dirname(exePath));
+    // 3. Check in local development folder
+    final projectRoot = p.dirname(p.dirname(Platform.resolvedExecutable));
     final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
-    if (File(devPath).existsSync()) {
-      return devPath;
-    }
+    if (File(devPath).existsSync()) return devPath;
 
-    // 5. Check in backend/ folder (for local dev)
+    // 4. Check in backend/ folder (root)
     final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
-    if (File(rootBackendPath).existsSync()) {
-      return rootBackendPath;
-    }
+    if (File(rootBackendPath).existsSync()) return rootBackendPath;
 
-    // 6. Check in a 'lib' subdirectory
+    // 5. Check in lib/ subdirectory
     final libSubPath = p.join(exeDir, 'lib', libName);
-    if (File(libSubPath).existsSync()) {
-      return libSubPath;
-    }
+    if (File(libSubPath).existsSync()) return libSubPath;
 
-    // 3. Development path (relative to project root)
-    final currentDir = Directory.current.path;
-    String projectRoot;
-    if (p.basename(currentDir) == 'frontend') {
-      projectRoot = p.dirname(currentDir);
-    } else {
-      projectRoot = currentDir;
-    }
-
-    final devPath = p.join(projectRoot, 'backend', libName);
-    if (File(devPath).existsSync()) {
-      return devPath;
-    }
-
-    // Fallback to system load path
     return libName;
   }
 
   static String getOnnxRuntimePath() {
     final String libName = _getOnnxLibraryName();
 
-    // 1. Check next to executable
     final exeDir = p.dirname(Platform.resolvedExecutable);
     final portablePath = p.join(exeDir, libName);
-    if (File(portablePath).existsSync()) {
-      return portablePath;
-    }
+    if (File(portablePath).existsSync()) return portablePath;
 
-    // 2. Check in Contents/Frameworks/ (for macOS)
     if (Platform.isMacOS) {
       final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
-      if (File(frameworksPath).existsSync()) {
-        return frameworksPath;
-      }
+      if (File(frameworksPath).existsSync()) return frameworksPath;
     }
 
-    // 3. Check in local development folder
     final projectRoot = p.dirname(p.dirname(Platform.resolvedExecutable));
     final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
-    if (File(devPath).existsSync()) {
-      return devPath;
-    }
+    if (File(devPath).existsSync()) return devPath;
 
-    // 4. Check in backend/ folder
     final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
-    if (File(rootBackendPath).existsSync()) {
-      return rootBackendPath;
-    }
+    if (File(rootBackendPath).existsSync()) return rootBackendPath;
 
-    // 5. Check in 'lib'
     final libSubPath = p.join(exeDir, 'lib', libName);
-    if (File(libSubPath).existsSync()) {
-      return libSubPath;
-    }
-
-    // 3. Development path
-    final currentDir = Directory.current.path;
-    String projectRoot;
-    if (p.basename(currentDir) == 'frontend') {
-      projectRoot = p.dirname(currentDir);
-    } else {
-      projectRoot = currentDir;
-    }
-
-    final devPath = p.join(projectRoot, 'backend', libName);
-    if (File(devPath).existsSync()) {
-      return devPath;
-    }
+    if (File(libSubPath).existsSync()) return libSubPath;
 
     return libName;
   }
