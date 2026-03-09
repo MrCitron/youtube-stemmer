@@ -265,56 +265,104 @@ class BackendFFI {
 
   static String _getLibraryPath() {
     final String libName = _getBackendLibraryName();
+    // ignore: avoid_print
+    print('FFI: Searching for $libName...');
 
     // 1. Check next to the executable
     final exeDir = p.dirname(Platform.resolvedExecutable);
     final portablePath = p.join(exeDir, libName);
-    if (File(portablePath).existsSync()) return portablePath;
+    if (File(portablePath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $portablePath');
+      return portablePath;
+    }
 
     // 2. Check in Contents/Frameworks/ (macOS)
     if (Platform.isMacOS) {
       final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
-      if (File(frameworksPath).existsSync()) return frameworksPath;
+      if (File(frameworksPath).existsSync()) {
+        // ignore: avoid_print
+        print('FFI: Found $libName at $frameworksPath');
+        return frameworksPath;
+      }
     }
 
     // 3. Check in local development folder
     final projectRoot = p.dirname(p.dirname(Platform.resolvedExecutable));
     final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
-    if (File(devPath).existsSync()) return devPath;
+    if (File(devPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $devPath');
+      return devPath;
+    }
 
     // 4. Check in backend/ folder (root)
     final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
-    if (File(rootBackendPath).existsSync()) return rootBackendPath;
+    if (File(rootBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $rootBackendPath');
+      return rootBackendPath;
+    }
 
     // 5. Check in lib/ subdirectory
     final libSubPath = p.join(exeDir, 'lib', libName);
-    if (File(libSubPath).existsSync()) return libSubPath;
+    if (File(libSubPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $libSubPath');
+      return libSubPath;
+    }
 
+    // ignore: avoid_print
+    print('FFI: $libName not found in known paths, falling back to system path');
     return libName;
   }
 
   static String getOnnxRuntimePath() {
     final String libName = _getOnnxLibraryName();
+    // ignore: avoid_print
+    print('FFI: Searching for $libName...');
 
     final exeDir = p.dirname(Platform.resolvedExecutable);
     final portablePath = p.join(exeDir, libName);
-    if (File(portablePath).existsSync()) return portablePath;
+    if (File(portablePath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $portablePath');
+      return portablePath;
+    }
 
     if (Platform.isMacOS) {
       final frameworksPath = p.join(p.dirname(exeDir), 'Frameworks', libName);
-      if (File(frameworksPath).existsSync()) return frameworksPath;
+      if (File(frameworksPath).existsSync()) {
+        // ignore: avoid_print
+        print('FFI: Found $libName at $frameworksPath');
+        return frameworksPath;
+      }
     }
 
     final projectRoot = p.dirname(p.dirname(Platform.resolvedExecutable));
     final devPath = p.join(projectRoot, Platform.isLinux ? 'linux' : (Platform.isMacOS ? 'macos' : 'windows'), libName);
-    if (File(devPath).existsSync()) return devPath;
+    if (File(devPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $devPath');
+      return devPath;
+    }
 
     final rootBackendPath = p.join(p.dirname(projectRoot), 'backend', libName);
-    if (File(rootBackendPath).existsSync()) return rootBackendPath;
+    if (File(rootBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $rootBackendPath');
+      return rootBackendPath;
+    }
 
     final libSubPath = p.join(exeDir, 'lib', libName);
-    if (File(libSubPath).existsSync()) return libSubPath;
+    if (File(libSubPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $libSubPath');
+      return libSubPath;
+    }
 
+    // ignore: avoid_print
+    print('FFI: $libName not found in known paths, falling back to system path');
     return libName;
   }
 
