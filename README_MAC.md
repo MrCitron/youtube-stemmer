@@ -6,9 +6,8 @@ Follow these steps to build and run the application locally on your MacBook.
 
 Ensure you have the following installed:
 - **Go (1.22+)**: [https://go.dev/dl/](https://go.dev/dl/)
-- **Flutter SDK**: [https://docs.flutter.dev/get-started/install/macos/desktop](https://docs.flutter.dev/get-started/install/macos/desktop)
+- [https://docs.flutter.dev/get-started/install/macos/desktop](https://docs.flutter.dev/get-started/install/macos/desktop)
 - **Xcode**: Install from the Mac App Store.
-- **FFmpeg**: Required for audio processing. Run `brew install ffmpeg`.
 
 ## 2. Build the Backend Shared Library
 
@@ -17,6 +16,7 @@ The Go backend should be compiled as a **Universal Binary** with explicit compat
 ```bash
 cd backend
 go mod tidy
+
 
 # Build for Apple Silicon (ARM64)
 GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=c-shared \
@@ -63,6 +63,9 @@ The Xcode project is configured to "Embed & Sign" these libraries. If you encoun
 2. Select the **Runner** target.
 3. Go to **General** -> **Frameworks, Libraries, and Embedded Content**.
 4. Ensure both `libbackend.dylib` and `libonnxruntime.dylib` are listed and set to **Embed & Sign**.
+
+### FFmpeg Runtime Dependency
+The application currently uses `ffmpeg` at runtime to standardize audio formats before stemming. If you encounter "ffmpeg conversion failed" errors, ensure FFmpeg is installed and available in your system PATH (e.g., `brew install ffmpeg`).
 
 ### Network Errors
 The app requires the `com.apple.security.network.client` entitlement to download models. This is already included in the project's `.entitlements` files.
