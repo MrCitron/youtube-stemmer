@@ -55,8 +55,11 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     let url_str = normalize_youtube_url(&url_raw);
     
     let output = std::process::Command::new("yt-dlp")
-        .arg("--get-title")
-        .arg("--get-uploader")
+        .arg("--print")
+        .arg("title")
+        .arg("--print")
+        .arg("uploader")
+        .arg("--no-playlist")
         .arg(&url_str)
         .output();
 
