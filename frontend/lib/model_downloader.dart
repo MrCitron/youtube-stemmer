@@ -23,20 +23,20 @@ class AppModel {
 
 const List<AppModel> availableModels = [
   AppModel(
-    id: 'htdemucs',
-    name: 'HTDemucs (4-track)',
-    url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs.onnx?download=true',
-    fileName: 'htdemucs.onnx',
-    stemNames: ['drums', 'bass', 'other', 'vocals'],
-    description: 'Standard 4-track separation (Drums, Bass, Vocals, Other).',
-  ),
-  AppModel(
     id: 'htdemucs_ft',
     name: 'HTDemucs Fine-tuned (4-track)',
     url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs_ft.onnx?download=true',
     fileName: 'htdemucs_ft.onnx',
     stemNames: ['drums', 'bass', 'other', 'vocals'],
     description: 'Higher quality 4-track separation (Best for vocals/drums).',
+  ),
+  AppModel(
+    id: 'htdemucs',
+    name: 'HTDemucs (4-track)',
+    url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs.onnx?download=true',
+    fileName: 'htdemucs.onnx',
+    stemNames: ['drums', 'bass', 'other', 'vocals'],
+    description: 'Standard 4-track separation (Drums, Bass, Vocals, Other).',
   ),
 ];
 
