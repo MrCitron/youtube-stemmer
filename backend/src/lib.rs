@@ -86,8 +86,12 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let mss = MediaSourceStream::new(Box::new(src), Default::default());
     
     let mut hint = Hint::new();
-    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") || input_path.ends_with(".webm") {
+    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") {
         hint.with_extension("mp4");
+    } else if input_path.ends_with(".webm") {
+        hint.with_extension("mkv");
+    } else if input_path.ends_with(".mp3") {
+        hint.with_extension("mp3");
     }
 
     let probed = symphonia::default::get_probe()
@@ -163,7 +167,9 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         
         let status = std::process::Command::new("yt-dlp")
             .arg("-f")
-            .arg("140/bestaudio[ext=m4a]")
+            .arg("ba/best")
+            .arg("--extractor-args")
+            .arg("youtube:player_client=ios,web,android")
             .arg("--no-playlist")
             .arg("-o")
             .arg(&download_path)
