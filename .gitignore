@@ -17,6 +17,8 @@ backend/onnxruntime.dll
 backend/models/*.onnx
 backend/test_input.wav
 backend/original_audio.mp4
+yt-dlp
+yt-dlp.exe
 
 # Legacy
 backend_go_legacy/
