@@ -31,17 +31,23 @@ jobs:
             onnx_lib: libonnxruntime.so
             onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-linux-x64-1.20.1.tgz
             target: x86_64-unknown-linux-gnu
+            ytdlp_url: https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux
+            ytdlp_bin: yt-dlp
           - os: macos-latest
             platform: macos
             backend_lib: libbackend.dylib
             onnx_lib: libonnxruntime.dylib
             onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-osx-universal2-1.19.2.tgz
+            ytdlp_url: https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos
+            ytdlp_bin: yt-dlp
           - os: windows-latest
             platform: windows
             backend_lib: backend.dll
             onnx_lib: onnxruntime.dll
             onnx_url: https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-win-x64-1.20.1.zip
             target: x86_64-pc-windows-msvc
+            ytdlp_url: https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+            ytdlp_bin: yt-dlp.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -100,23 +106,33 @@ jobs:
           fi
           mv ${{ matrix.onnx_lib }} backend/
 
+      - name: Download yt-dlp
+        shell: bash
+        run: |
+          curl -Lf ${{ matrix.ytdlp_url }} -o ${{ matrix.ytdlp_bin }}
+          chmod +x ${{ matrix.ytdlp_bin }}
+          mv ${{ matrix.ytdlp_bin }} backend/
+
       - name: Prepare Frontend (MacOS)
         if: matrix.platform == 'macos'
         run: |
           cp backend/${{ matrix.backend_lib }} frontend/macos/
           cp backend/${{ matrix.onnx_lib }} frontend/macos/
+          cp backend/yt-dlp frontend/macos/
 
       - name: Prepare Frontend (Windows)
         if: matrix.platform == 'windows'
         run: |
           cp backend/${{ matrix.backend_lib }} frontend/windows/
           cp backend/${{ matrix.onnx_lib }} frontend/windows/
+          cp backend/yt-dlp.exe frontend/windows/
 
       - name: Prepare Frontend (Linux)
         if: matrix.platform == 'linux'
         run: |
           cp backend/${{ matrix.backend_lib }} frontend/linux/
           cp backend/${{ matrix.onnx_lib }} frontend/linux/
+          cp backend/yt-dlp frontend/linux/
 
       - name: Build Flutter App
         run: |
@@ -130,6 +146,7 @@ jobs:
           cd frontend/build/linux/x64/release/bundle
           cp $GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} .
           cp $GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} .
+          cp $GITHUB_WORKSPACE/backend/yt-dlp .
           tar -czf $GITHUB_WORKSPACE/youtube-stemmer-linux.tar.gz .
 
       - name: Package Artifacts (Windows)
@@ -139,12 +156,14 @@ jobs:
           cd frontend/build/windows/x64/runner/Release
           Copy-Item $env:GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} .
           Copy-Item $env:GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} .
+          Copy-Item $env:GITHUB_WORKSPACE/backend/yt-dlp.exe .
           Compress-Archive -Path * -DestinationPath $env:GITHUB_WORKSPACE/youtube-stemmer-windows.zip
 
       - name: Package Artifacts (MacOS)
         if: matrix.platform == 'macos'
         run: |
           cd frontend/build/macos/Build/Products/Release/
+          cp $GITHUB_WORKSPACE/backend/yt-dlp "youtube_stemmer.app/Contents/MacOS/"
           zip -r $GITHUB_WORKSPACE/youtube-stemmer-macos.zip "youtube_stemmer.app"
 
       - name: Upload Artifact

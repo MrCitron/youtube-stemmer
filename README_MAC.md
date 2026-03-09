@@ -46,6 +46,11 @@ lipo -create -output libbackend.dylib \
    - Copy `lib/libonnxruntime.1.19.2.dylib` to `frontend/macos/libonnxruntime.dylib`.
    - **Crucial**: Ensure the file is named exactly `libonnxruntime.dylib`.
 
+3. **Download and Bundle yt-dlp**:
+   - Download the macOS binary: [yt-dlp_macos](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos)
+   - Rename it to `yt-dlp` and make it executable: `chmod +x yt-dlp`
+   - Copy it to the `frontend/macos/` folder: `cp yt-dlp frontend/macos/`
+
 ## 4. Run the Application
 
 Navigate to the `frontend` directory and run:
@@ -58,8 +63,11 @@ flutter run -d macos
 
 ## 5. Troubleshooting
 
-### "Library not found"
-Ensure `libbackend.dylib` and `libonnxruntime.dylib` are in `frontend/macos/` AND added to the Xcode project as "Embed & Sign" (General tab of the Runner target).
+### "yt-dlp not found" or "Failed to execute yt-dlp"
+The application expects `yt-dlp` to be bundled inside the app. For local development:
+1. Open the project in Xcode: `open macos/Runner.xcworkspace`.
+2. Add the `yt-dlp` binary from the `macos/` folder to the **Runner** target (similar to how you added the dylibs).
+3. In the **"Build Phases"** tab, under **"Copy Bundle Resources"**, ensure `yt-dlp` is listed.
 
 ### FFmpeg (NOT NEEDED)
 The new Rust backend handles audio decoding natively. You do NOT need to install FFmpeg.
