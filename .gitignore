@@ -6,11 +6,8 @@
 *.tmp
 *.temp
 
-# Backend (Go)
-backend/venv/
-backend/__pycache__/
-backend/build/
-backend/test_stems/
+# Backend (Rust)
+backend/target/
 backend/libbackend.h
 backend/libbackend.so
 backend/libbackend.dylib
@@ -20,6 +17,9 @@ backend/onnxruntime.dll
 backend/models/*.onnx
 backend/test_input.wav
 backend/original_audio.mp4
+
+# Legacy
+backend_go_legacy/
 
 # Frontend (Flutter)
 frontend/build/
