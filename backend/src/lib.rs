@@ -46,6 +46,29 @@ fn normalize_youtube_url(url: &str) -> String {
     url.to_string()
 }
 
+fn get_ytdlp_path() -> String {
+    let bin_name = if cfg!(windows) { "yt-dlp.exe" } else { "yt-dlp" };
+    
+    // 1. Check next to the executable (bundled case)
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(dir) = exe_path.parent() {
+            let bundled = dir.join(bin_name);
+            if bundled.exists() {
+                return bundled.to_string_lossy().to_string();
+            }
+        }
+    }
+
+    // 2. Check current working directory
+    let cwd_bin = Path::new(".").join(bin_name);
+    if cwd_bin.exists() {
+        return cwd_bin.to_string_lossy().to_string();
+    }
+
+    // 3. Fallback to system PATH
+    bin_name.to_string()
+}
+
 #[no_mangle]
 pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     if url.is_null() {
@@ -54,7 +77,7 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy();
     let url_str = normalize_youtube_url(&url_raw);
     
-    let output = std::process::Command::new("yt-dlp")
+    let output = std::process::Command::new(get_ytdlp_path())
         .arg("--print")
         .arg("title")
         .arg("--print")
@@ -165,7 +188,7 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         
         println!("Rust: Starting download via yt-dlp for {}", url_str);
         
-        let status = std::process::Command::new("yt-dlp")
+        let status = std::process::Command::new(get_ytdlp_path())
             .arg("-f")
             .arg("ba/best")
             .arg("--extractor-args")
