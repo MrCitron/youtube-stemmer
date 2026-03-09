@@ -2,7 +2,6 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_double};
 use std::path::Path;
 use std::fs::File;
-use std::io::Write;
 use ort::session::Session;
 use ort::value::Value;
 use ndarray::Array3;
@@ -13,9 +12,6 @@ use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
-use url::Url;
-use futures_util::StreamExt;
-use rusty_ytdl::{Video, VideoOptions, VideoQuality, VideoSearchOptions};
 
 #[no_mangle]
 pub extern "C" fn HelloWorld() {
@@ -57,27 +53,27 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     }
     let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy();
     let url_str = normalize_youtube_url(&url_raw);
-    println!("Rust: GetMetadata for URL: {} (normalized from {})", url_str, url_raw);
     
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let result = rt.block_on(async {
-        let video_options = VideoOptions {
-            quality: VideoQuality::HighestAudio,
-            filter: VideoSearchOptions::Audio,
-            ..Default::default()
-        };
-        let video = match Video::new_with_options(&url_str, video_options) {
-            Ok(v) => v,
-            Err(e) => return format!("Error: Failed to create video object: {}", e),
-        };
+    let output = std::process::Command::new("yt-dlp")
+        .arg("--get-title")
+        .arg("--get-uploader")
+        .arg(&url_str)
+        .output();
 
-        match video.get_info().await {
-            Ok(info) => {
-                format!("Title: {}, Author: {}", info.video_details.title, info.video_details.author.as_ref().map(|a| a.name.as_str()).unwrap_or("Unknown"))
+    let result = match output {
+        Ok(out) => {
+            if out.status.success() {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                let mut lines = stdout.lines();
+                let title = lines.next().unwrap_or("Unknown Title");
+                let author = lines.next().unwrap_or("Unknown Author");
+                format!("Title: {}, Author: {}", title, author)
+            } else {
+                format!("Error: yt-dlp failed: {}", String::from_utf8_lossy(&out.stderr))
             }
-            Err(e) => format!("Error: {}", e),
         }
-    });
+        Err(e) => format!("Error: Failed to execute yt-dlp: {}", e),
+    };
 
     CString::new(result).unwrap().into_raw()
 }
@@ -87,7 +83,7 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let mss = MediaSourceStream::new(Box::new(src), Default::default());
     
     let mut hint = Hint::new();
-    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") {
+    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") || input_path.ends_with(".webm") {
         hint.with_extension("mp4");
     }
 
@@ -152,17 +148,7 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
     let url_str = normalize_youtube_url(&url_raw);
     let out_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy().to_string();
 
-    println!("Rust: Starting download for {} (normalized from {})", url_str, url_raw);
-
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let result: Result<(), String> = rt.block_on(async {
-        let video_options = VideoOptions {
-            quality: VideoQuality::HighestAudio,
-            filter: VideoSearchOptions::Audio,
-            ..Default::default()
-        };
-        let video = Video::new_with_options(&url_str, video_options).map_err(|e| e.to_string())?;
-        
+    let result: Result<(), String> = (|| {
         let path = Path::new(&out_str);
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -170,44 +156,62 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
 
         let download_path = out_str.clone() + ".download";
         
-        // Manual download to support progress
-        let info = video.get_info().await.map_err(|e| e.to_string())?;
-        let format = info.formats.iter()
-            .filter(|f| f.has_audio && !f.has_video)
-            .max_by_key(|f| f.audio_bitrate.unwrap_or(0))
-            .ok_or("No audio formats found")?;
-
-        let client = reqwest::Client::new();
-        let mut response = client.get(format.url.clone())
-            .send().await.map_err(|e| e.to_string())?;
+        println!("Rust: Starting download via yt-dlp for {}", url_str);
         
-        let total_size = response.content_length().unwrap_or(0);
-        let mut file = File::create(&download_path).map_err(|e| e.to_string())?;
-        let mut downloaded: u64 = 0;
+        let status = std::process::Command::new("yt-dlp")
+            .arg("-f")
+            .arg("140/bestaudio[ext=m4a]")
+            .arg("--no-playlist")
+            .arg("-o")
+            .arg(&download_path)
+            .arg(&url_str)
+            .status()
+            .map_err(|e| format!("Failed to execute yt-dlp: {}", e))?;
 
-        let mut stream_bytes = response.bytes_stream();
+        if !status.success() {
+            return Err(format!("yt-dlp failed with exit code: {:?}", status.code()));
+        }
 
-        while let Some(item) = stream_bytes.next().await {
-            let chunk = item.map_err(|e| e.to_string())?;
-            file.write_all(&chunk).map_err(|e| e.to_string())?;
-            downloaded += chunk.len() as u64;
-            if total_size > 0 {
-                if let Some(callback) = cb {
-                    callback(downloaded as f64 / total_size as f64 * 0.5);
+        // Check if the file was actually created (yt-dlp sometimes appends extension)
+        println!("Rust: Checking for download file at {}", download_path);
+        
+        if let Ok(entries) = std::fs::read_dir(".") {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    println!("Rust: Local file found: {:?}", entry.file_name());
                 }
             }
         }
-        drop(file);
 
-        convert_to_wav(&download_path, &out_str)?;
+        let actual_download_path = if Path::new(&download_path).exists() {
+            download_path.clone()
+        } else {
+            // Try common extensions
+            let mut found = None;
+            for ext in &["m4a", "webm", "opus", "mp3"] {
+                let p = format!("{}.{}", download_path, ext);
+                if Path::new(&p).exists() {
+                    found = Some(p);
+                    break;
+                }
+            }
+            found.ok_or_else(|| "yt-dlp finished but no output file was found".to_string())?
+        };
+
+        println!("Rust: Download complete, converting to WAV...");
+        if let Some(callback) = cb {
+            callback(0.5);
+        }
+
+        convert_to_wav(&actual_download_path, &out_str)?;
         
         if let Some(callback) = cb {
             callback(1.0);
         }
 
-        let _ = std::fs::remove_file(download_path);
+        let _ = std::fs::remove_file(actual_download_path);
         Ok(())
-    });
+    })();
 
     match result {
         Ok(_) => std::ptr::null_mut(),
@@ -232,9 +236,7 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
     
     let result: Result<(), String> = (|| {
         if let Some(lp) = lib_path_str {
-            unsafe {
-                ort::init_from(&*lp).map_err(|e| e.to_string())?;
-            }
+            ort::init_from(&*lp).map_err(|e| e.to_string())?;
         }
 
         let session = Session::builder()
@@ -275,7 +277,7 @@ pub extern "C" fn SplitAudio(
         let num_channels = spec.channels as usize;
         let num_frames = samples.len() / num_channels;
 
-        let chunk_size = 44100 * 10;
+        let chunk_size = 343980; // Match export dummy input size
         let num_chunks = (num_frames + chunk_size - 1) / chunk_size;
 
         let mut output_stems: Vec<Vec<f32>> = vec![Vec::with_capacity(samples.len()); stem_names_vec.len()];
@@ -285,7 +287,7 @@ pub extern "C" fn SplitAudio(
             let end = std::cmp::min(start + chunk_size, num_frames);
             let current_chunk_len = end - start;
 
-            let mut input_tensor = Array3::<f32>::zeros((1, 2, current_chunk_len));
+            let mut input_tensor = Array3::<f32>::zeros((1, 2, chunk_size));
             for i in 0..current_chunk_len {
                 for ch in 0..2 {
                     let sample_idx = (start + i) * num_channels + (if ch < num_channels { ch } else { 0 });
@@ -293,6 +295,7 @@ pub extern "C" fn SplitAudio(
                 }
             }
 
+            println!("Rust: Running inference for chunk {}/{} (len={}, padded to {})", c+1, num_chunks, current_chunk_len, chunk_size);
             let input_value = Value::from_array(input_tensor).map_err(|e| e.to_string())?;
             let outputs = stemmer.session.run(ort::inputs![input_value]).map_err(|e| e.to_string())?;
             
@@ -302,7 +305,9 @@ pub extern "C" fn SplitAudio(
             for s in 0..stem_names_vec.len() {
                 for i in 0..current_chunk_len {
                     for ch in 0..2 {
-                        let idx = s * 2 * current_chunk_len + ch * current_chunk_len + i;
+                        // shape is [1, Stems, 2, Time]
+                        // Note: chunk_size here is fixed at 343980
+                        let idx = s * 2 * chunk_size + ch * chunk_size + i;
                         output_stems[s].push(output_data[idx]);
                     }
                 }
