@@ -1,0 +1,11 @@
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/ort_sys-173f00ec17224cb3.d: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/dirs.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/stub.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/version.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libort_sys-173f00ec17224cb3.rlib: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/dirs.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/stub.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/version.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libort_sys-173f00ec17224cb3.rmeta: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/dirs.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/stub.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/version.rs
+
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/lib.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/mod.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/internal/dirs.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/stub.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ort-sys-2.0.0-rc.12/src/version.rs:

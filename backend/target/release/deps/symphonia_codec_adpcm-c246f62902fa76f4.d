@@ -1,0 +1,10 @@
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/symphonia_codec_adpcm-c246f62902fa76f4.d: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ima.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ms.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/common.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libsymphonia_codec_adpcm-c246f62902fa76f4.rlib: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ima.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ms.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/common.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libsymphonia_codec_adpcm-c246f62902fa76f4.rmeta: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ima.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ms.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/common.rs
+
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/lib.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ima.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/codec_ms.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-codec-adpcm-0.5.5/src/common.rs:

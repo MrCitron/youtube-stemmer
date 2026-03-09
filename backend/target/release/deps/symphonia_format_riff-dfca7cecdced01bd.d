@@ -1,0 +1,10 @@
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/symphonia_format_riff-dfca7cecdced01bd.d: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/common.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/chunks.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libsymphonia_format_riff-dfca7cecdced01bd.rlib: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/common.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/chunks.rs
+
+/home/metin/devhome/projects/perso/youtube-stemmer/backend/target/release/deps/libsymphonia_format_riff-dfca7cecdced01bd.rmeta: /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/lib.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/common.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/mod.rs /home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/chunks.rs
+
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/lib.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/common.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/mod.rs:
+/home/metin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/symphonia-format-riff-0.5.5/src/wave/chunks.rs:
