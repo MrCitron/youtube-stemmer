@@ -15,6 +15,7 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 use url::Url;
 use futures_util::StreamExt;
+use rusty_ytdl::{Video, VideoOptions, VideoQuality, VideoSearchOptions};
 
 #[no_mangle]
 pub extern "C" fn HelloWorld() {
@@ -39,23 +40,40 @@ pub extern "C" fn FreeString(s: *mut c_char) {
 
 pub type ProgressCallback = extern "C" fn(progress: c_double);
 
+fn normalize_youtube_url(url: &str) -> String {
+    if url.contains("youtu.be/") {
+        if let Some(id) = url.split("youtu.be/").last() {
+            let id = id.split('?').next().unwrap_or(id);
+            return format!("https://www.youtube.com/watch?v={}", id);
+        }
+    }
+    url.to_string()
+}
+
 #[no_mangle]
 pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     if url.is_null() {
         return CString::new("Error: Null URL").unwrap().into_raw();
     }
-    let url_str = unsafe { CStr::from_ptr(url) }.to_string_lossy();
-    let url_parsed = match Url::parse(&url_str) {
-        Ok(u) => u,
-        Err(e) => return CString::new(format!("Error: Invalid URL: {}", e)).unwrap().into_raw(),
-    };
-
+    let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy();
+    let url_str = normalize_youtube_url(&url_raw);
+    println!("Rust: GetMetadata for URL: {} (normalized from {})", url_str, url_raw);
+    
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        match rustube::Video::from_url(&url_parsed).await {
-            Ok(video) => {
-                let info = video.video_info();
-                format!("Title: {}, Author: {}", info.player_response.video_details.title, info.player_response.video_details.author)
+        let video_options = VideoOptions {
+            quality: VideoQuality::HighestAudio,
+            filter: VideoSearchOptions::Audio,
+            ..Default::default()
+        };
+        let video = match Video::new_with_options(&url_str, video_options) {
+            Ok(v) => v,
+            Err(e) => return format!("Error: Failed to create video object: {}", e),
+        };
+
+        match video.get_info().await {
+            Ok(info) => {
+                format!("Title: {}, Author: {}", info.video_details.title, info.video_details.author.as_ref().map(|a| a.name.as_str()).unwrap_or("Unknown"))
             }
             Err(e) => format!("Error: {}", e),
         }
@@ -130,24 +148,21 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         return CString::new("Error: Null arguments").unwrap().into_raw();
     }
     
-    let url_str = unsafe { CStr::from_ptr(url) }.to_string_lossy().to_string();
+    let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy().to_string();
+    let url_str = normalize_youtube_url(&url_raw);
     let out_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy().to_string();
-    let url_parsed = match Url::parse(&url_str) {
-        Ok(u) => u,
-        Err(e) => return CString::new(format!("Error: Invalid URL: {}", e)).unwrap().into_raw(),
-    };
 
-    println!("Rust: Starting download for {}", url_str);
+    println!("Rust: Starting download for {} (normalized from {})", url_str, url_raw);
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result: Result<(), String> = rt.block_on(async {
-        let video = rustube::Video::from_url(&url_parsed).await.map_err(|e| e.to_string())?;
+        let video_options = VideoOptions {
+            quality: VideoQuality::HighestAudio,
+            filter: VideoSearchOptions::Audio,
+            ..Default::default()
+        };
+        let video = Video::new_with_options(&url_str, video_options).map_err(|e| e.to_string())?;
         
-        let stream = video.streams().iter()
-            .filter(|s| s.mime.type_() == "audio")
-            .max_by_key(|s| s.bitrate)
-            .ok_or("No audio streams found")?;
-
         let path = Path::new(&out_str);
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -155,8 +170,15 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
 
         let download_path = out_str.clone() + ".download";
         
+        // Manual download to support progress
+        let info = video.get_info().await.map_err(|e| e.to_string())?;
+        let format = info.formats.iter()
+            .filter(|f| f.has_audio && !f.has_video)
+            .max_by_key(|f| f.audio_bitrate.unwrap_or(0))
+            .ok_or("No audio formats found")?;
+
         let client = reqwest::Client::new();
-        let response = client.get(stream.signature_cipher.url.clone())
+        let mut response = client.get(format.url.clone())
             .send().await.map_err(|e| e.to_string())?;
         
         let total_size = response.content_length().unwrap_or(0);
@@ -210,7 +232,9 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
     
     let result: Result<(), String> = (|| {
         if let Some(lp) = lib_path_str {
-            ort::init_from(&*lp).map_err(|e| e.to_string())?;
+            unsafe {
+                ort::init_from(&*lp).map_err(|e| e.to_string())?;
+            }
         }
 
         let session = Session::builder()
