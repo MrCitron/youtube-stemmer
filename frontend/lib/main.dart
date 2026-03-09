@@ -488,25 +488,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 enabled: !_isProcessing,
               ),
               const SizedBox(height: 20),
-              /*
-              DropdownButtonFormField<AppModel>(
-                value: _selectedModel,
-                decoration: const InputDecoration(labelText: 'AI Model'),
-                items: availableModels.map((m) {
-                  return DropdownMenuItem(
-                    value: m,
-                    child: Text(m.name),
-                  );
-                }).toList(),
-                onChanged: _isProcessing ? null : (m) {
-                  if (m != null) {
-                    setState(() => _selectedModel = m);
-                    _checkModel(m);
-                  }
-                },
-              ),
-              */
-              const SizedBox(height: 20),
               if (_isProcessing) ...[
                 Column(
                   children: [

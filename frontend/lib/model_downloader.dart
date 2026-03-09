@@ -23,20 +23,28 @@ class AppModel {
 
 const List<AppModel> availableModels = [
   AppModel(
+    id: 'htdemucs_hq',
+    name: 'HTDemucs High-Quality (4-track)',
+    url: 'https://huggingface.co/smank/htdemucs-onnx/resolve/main/htdemucs.onnx?download=true',
+    fileName: 'htdemucs_hq.onnx',
+    stemNames: ['drums', 'bass', 'other', 'vocals'],
+    description: 'High-quality 4-track separation from smank/htdemucs-onnx.',
+  ),
+  AppModel(
     id: 'htdemucs_ft',
     name: 'HTDemucs Fine-tuned (4-track)',
     url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs_ft.onnx?download=true',
     fileName: 'htdemucs_ft.onnx',
     stemNames: ['drums', 'bass', 'other', 'vocals'],
-    description: 'Higher quality 4-track separation (Best for vocals/drums).',
+    description: 'Fine-tuned 4-track separation (Best for vocals/drums).',
   ),
   AppModel(
-    id: 'htdemucs',
-    name: 'HTDemucs (4-track)',
-    url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs.onnx?download=true',
-    fileName: 'htdemucs.onnx',
-    stemNames: ['drums', 'bass', 'other', 'vocals'],
-    description: 'Standard 4-track separation (Drums, Bass, Vocals, Other).',
+    id: 'htdemucs_6s',
+    name: 'HTDemucs 6-track',
+    url: 'https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs_6s.onnx?download=true',
+    fileName: 'htdemucs_6s.onnx',
+    stemNames: ['drums', 'bass', 'other', 'vocals', 'guitar', 'piano'],
+    description: '6-track separation (Drums, Bass, Other, Vocals, Guitar, Piano).',
   ),
 ];
 
