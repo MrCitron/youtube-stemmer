@@ -300,9 +300,7 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                 }
 
                 println!("Rust: Calling ort::init_from(&lp)...");
-                let builder = unsafe {
-                    ort::init_from(&lp).map_err(|e| e.to_string())?
-                };
+                let builder = ort::init_from(&lp).map_err(|e| e.to_string())?;
                 
                 println!("Rust: Calling builder.commit()...");
                 builder.commit();
