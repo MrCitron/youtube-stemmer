@@ -139,6 +139,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _urlController = TextEditingController();
+  final FocusNode _urlFocusNode = FocusNode();
   bool _isProcessing = false;
   String? _errorMessage;
   String? _stemsDirectory;
@@ -158,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkModel(_selectedModel);
+      _urlFocusNode.requestFocus();
     });
   }
 
@@ -597,6 +599,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       const SizedBox(height: 20),
                       TextField(
                         controller: _urlController,
+                        focusNode: _urlFocusNode,
                         decoration: InputDecoration(
                           hintText: 'Paste YouTube URL here...',
                           filled: true,
@@ -692,6 +695,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     _urlController.dispose();
+    _urlFocusNode.dispose();
     super.dispose();
   }
 }
