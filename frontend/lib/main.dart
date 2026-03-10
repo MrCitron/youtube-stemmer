@@ -142,15 +142,35 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isProcessing = false;
   Isolate? _downloadIsolate;
   Isolate? _stemmingIsolate;
+  ReceivePort? _downloadReceivePort;
+  ReceivePort? _stemmingReceivePort;
   String? _currentDownloadPath;
   String? _currentOutputDir;
 
+  bool _isCancelling = false;
   void _cancelProcessing() async {
+    if (_isCancelling) return;
+    _isCancelling = true;
+    
     LogService().info('Cancellation requested by user.');
+    
+    // Signal the native backend to abort its tasks.
+    BackendFFI().cancelTasks();
+    
+    // Brief delay to allow the native library to recognize the abort signal 
+    // and stop invoking any callbacks into Dart, avoiding crashes during unwind.
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    _downloadReceivePort?.close();
+    _stemmingReceivePort?.close();
+    _downloadReceivePort = null;
+    _stemmingReceivePort = null;
+
     _downloadIsolate?.kill(priority: Isolate.immediate);
     _stemmingIsolate?.kill(priority: Isolate.immediate);
     _downloadIsolate = null;
     _stemmingIsolate = null;
+    _isCancelling = false;
 
     // Cleanup files
     if (_currentDownloadPath != null) {
@@ -170,8 +190,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     setState(() {
       _isProcessing = false;
-      _errorMessage = 'Process cancelled by user.';
     });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Process cancelled by user.')),
+      );
+    }
   }
 
   String? _errorMessage;
@@ -318,28 +343,34 @@ class _MyHomePageState extends State<MyHomePage> {
         await tempDir.create(recursive: true);
       }
 
-      final receivePort = ReceivePort();
+      _downloadReceivePort = ReceivePort();
       final downloadTracker = ProgressTracker();
       
       final isolate = await Isolate.spawn(_downloadAudioIsolate, {
         'url': url,
         'path': downloadPath,
-        'sendPort': receivePort.sendPort,
+        'sendPort': _downloadReceivePort!.sendPort,
       });
       _downloadIsolate = isolate;
 
-      await for (final message in receivePort) {
+      await for (final message in _downloadReceivePort!) {
         if (message is double) {
           setState(() {
             _downloadProgress = message;
             _downloadEta = downloadTracker.calculateEta(message);
           });
         } else if (message is String?) {
-          receivePort.close();
+          _downloadReceivePort?.close();
+          _downloadReceivePort = null;
           isolate.kill();
           if (message != null) throw Exception('Download failed: $message');
           break;
         }
+      }
+
+      if (!_isProcessing) {
+        LogService().info('Download step interrupted by cancellation.');
+        return;
       }
 
       // 3. Split Audio (Stemming)
@@ -353,25 +384,26 @@ class _MyHomePageState extends State<MyHomePage> {
       final downloader = ModelDownloader();
       final modelPath = await downloader.getModelPath(_selectedModel);
       final stemmingTracker = ProgressTracker();
-      final stemmingReceivePort = ReceivePort();
+      _stemmingReceivePort = ReceivePort();
 
       final stemmingIsolate = await Isolate.spawn(_splitAudioIsolate, {
         'input': downloadPath,
         'output': outputDir,
         'modelPath': modelPath,
         'stemNames': _selectedModel.stemNames,
-        'sendPort': stemmingReceivePort.sendPort,
+        'sendPort': _stemmingReceivePort!.sendPort,
       });
       _stemmingIsolate = stemmingIsolate;
 
-      await for (final message in stemmingReceivePort) {
+      await for (final message in _stemmingReceivePort!) {
         if (message is double) {
           setState(() {
             _stemmingProgress = message;
             _stemmingEta = stemmingTracker.calculateEta(message);
           });
         } else if (message is String?) {
-          stemmingReceivePort.close();
+          _stemmingReceivePort?.close();
+          _stemmingReceivePort = null;
           stemmingIsolate.kill();
           if (message != null) {
             if (message.contains('not initialized')) {
@@ -418,6 +450,10 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     } catch (e) {
+      if (_isCancelling) {
+        LogService().info('Process catch: ignoring error because user is cancelling.');
+        return;
+      }
       LogService().error('Process failed: $e');
       if (mounted) {
         final errorStr = e.toString();

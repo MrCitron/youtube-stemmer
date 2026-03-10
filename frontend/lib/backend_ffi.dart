@@ -60,6 +60,9 @@ typedef CreateMp3Zip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.P
 typedef FreeStringFunc = ffi.Void Function(ffi.Pointer<Utf8> str);
 typedef FreeString = void Function(ffi.Pointer<Utf8> str);
 
+typedef CancelTasksFunc = ffi.Void Function();
+typedef CancelTasks = void Function();
+
 class BackendFFI {
   static final BackendFFI _instance = BackendFFI._internal();
   factory BackendFFI() => _instance;
@@ -75,6 +78,7 @@ class BackendFFI {
   late final CreateMp3Zip _createMp3Zip;
   late final FreeString _freeString;
   late final GetMetadata _checkStatus;
+  late final CancelTasks _cancelTasks;
 
   BackendFFI._internal() {
     final libPath = _getLibraryPath();
@@ -99,9 +103,13 @@ class BackendFFI {
     _freeString = _lib.lookup<ffi.NativeFunction<FreeStringFunc>>('FreeString').asFunction();
 
     _checkStatus = _lib.lookup<ffi.NativeFunction<GetMetadataFunc>>('CheckStatus').asFunction();
+
+    _cancelTasks = _lib.lookup<ffi.NativeFunction<CancelTasksFunc>>('CancelTasks').asFunction();
   }
 
   void helloWorld() => _helloWorld();
+
+  void cancelTasks() => _cancelTasks();
 
   String checkStatus() {
     try {

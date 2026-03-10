@@ -2,13 +2,14 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_double};
 use std::path::Path;
 use std::fs::File;
-use std::io::{Read, BufRead, BufReader};
+use std::io::{Read, BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use ort::session::Session;
 use ort::value::Value;
 use ndarray::Array3;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 use symphonia::core::audio::Signal;
@@ -16,6 +17,8 @@ use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
+
+static ABORT: AtomicBool = AtomicBool::new(false);
 
 #[no_mangle]
 pub extern "C" fn HelloWorld() {
@@ -36,6 +39,12 @@ pub extern "C" fn FreeString(s: *mut c_char) {
     unsafe {
         let _ = CString::from_raw(s);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn CancelTasks() {
+    println!("Rust: Abort signal received");
+    ABORT.store(true, Ordering::SeqCst);
 }
 
 pub type ProgressCallback = extern "C" fn(progress: c_double);
@@ -150,6 +159,9 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let mut writer = hound::WavWriter::create(output_path, spec).map_err(|e| e.to_string())?;
 
     while let Ok(packet) = format.next_packet() {
+        if ABORT.load(Ordering::Relaxed) {
+            return Err("Conversion aborted".to_string());
+        }
         if packet.track_id() != track_id {
             continue;
         }
@@ -179,6 +191,7 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
 #[no_mangle]
 pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, cb: Option<ProgressCallback>) -> *mut c_char {
+    ABORT.store(false, Ordering::SeqCst);
     let result = std::panic::catch_unwind(|| -> Result<(), String> {
         if url.is_null() || output_path.is_null() {
             return Err("Error: Null arguments".to_string());
@@ -215,16 +228,20 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         if let Some(stdout) = child.stdout.take() {
             let reader = BufReader::new(stdout);
             for line in reader.lines() {
+                if ABORT.load(Ordering::Relaxed) {
+                    let _ = child.kill();
+                    return Err("Download aborted".to_string());
+                }
                 if let Ok(l) = line {
-                    // Try to parse progress: "[download]  10.0% of ..."
                     if l.contains("[download]") && l.contains('%') {
                         let parts: Vec<&str> = l.split_whitespace().collect();
                         for p in parts {
                             if p.contains('%') {
                                 if let Ok(val) = p.replace('%', "").parse::<f64>() {
                                     if let Some(callback) = cb {
-                                        // Map 0-100% download to 0.0-0.8 range (leaving 0.2 for conversion)
-                                        callback(val / 100.0 * 0.8);
+                                        if !ABORT.load(Ordering::Relaxed) {
+                                            callback(val / 100.0 * 0.8);
+                                        }
                                     }
                                 }
                                 break;
@@ -232,6 +249,7 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
                         }
                     }
                 }
+
             }
         }
 
@@ -239,6 +257,10 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
 
         if !status.success() {
             return Err(format!("yt-dlp failed with exit code: {:?}", status.code()));
+        }
+
+        if ABORT.load(Ordering::Relaxed) {
+            return Err("Download aborted".to_string());
         }
 
         let actual_download_path = if Path::new(&download_path).exists() {
@@ -256,14 +278,18 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         };
 
         if let Some(callback) = cb {
-            callback(0.85);
+            if !ABORT.load(Ordering::Relaxed) {
+                callback(0.85);
+            }
         }
 
         println!("Rust: Download complete, converting to WAV...");
         convert_to_wav(&actual_download_path, &out_str)?;
         
         if let Some(callback) = cb {
-            callback(1.0);
+            if !ABORT.load(Ordering::Relaxed) {
+                callback(1.0);
+            }
         }
 
         let _ = std::fs::remove_file(actual_download_path);
@@ -321,27 +347,14 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
             std::env::set_var("ORT_DISABLE_TELEMETRY", "1");
 
             if let Some(lp) = lib_path_str {
-                println!("Rust: Target dynamic library: {}", lp);
+                println!("Rust: Initializing ORT from {}", lp);
                 if !Path::new(&lp).exists() {
-                    return Err(format!("ORT library not found at: {}", lp));
+                    return Err(format!("ORT library not found: {}", lp));
                 }
                 
-                #[cfg(unix)]
-                {
-                    println!("Rust: Manual dlopen check (RTLD_NOW | RTLD_GLOBAL)...");
-                    let lp_c = CString::new(lp.clone()).unwrap();
-                    let handle = unsafe { libc::dlopen(lp_c.as_ptr(), libc::RTLD_NOW | libc::RTLD_GLOBAL) };
-                    if handle.is_null() {
-                        let err = unsafe { CStr::from_ptr(libc::dlerror()) }.to_string_lossy();
-                        println!("Rust: Manual dlopen failed: {}", err);
-                        return Err(format!("dlopen failed: {}", err));
-                    }
-                    println!("Rust: Manual dlopen success. Keeping handle open.");
-                }
-
                 println!("Rust: Calling ort::init_from(&lp).commit()...");
                 let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
-                println!("Rust: ort::init_from().commit() returned: {}", initialized);
+                println!("Rust: ort::init_from().commit() result: {}", initialized);
             } else {
                 println!("Rust: Initializing ORT with default strategy...");
                 let _ = ort::init().commit();
@@ -385,6 +398,7 @@ pub extern "C" fn SplitAudio(
     stem_names: *const c_char,
     cb: Option<ProgressCallback>,
 ) -> *mut c_char {
+    ABORT.store(false, Ordering::SeqCst);
     let result = std::panic::catch_unwind(|| -> Result<(), String> {
         let input_path_str = unsafe { CStr::from_ptr(input_path) }.to_string_lossy().to_string();
         let output_dir_str = unsafe { CStr::from_ptr(output_dir) }.to_string_lossy().to_string();
@@ -408,6 +422,10 @@ pub extern "C" fn SplitAudio(
         let mut output_stems: Vec<Vec<f32>> = vec![Vec::with_capacity(samples.len()); stem_names_vec.len()];
 
         for c in 0..num_chunks {
+            if ABORT.load(Ordering::Relaxed) {
+                return Err("Stemming aborted".to_string());
+            }
+
             let start = c * chunk_size;
             let end = std::cmp::min(start + chunk_size, num_frames);
             let current_chunk_len = end - start;
@@ -436,7 +454,9 @@ pub extern "C" fn SplitAudio(
             }
 
             if let Some(callback) = cb {
-                callback(c as f64 / num_chunks as f64);
+                if !ABORT.load(Ordering::Relaxed) {
+                    callback(c as f64 / num_chunks as f64);
+                }
             }
         }
 
@@ -543,7 +563,6 @@ pub extern "C" fn CreateZip(paths: *const c_char, output_path: *const c_char) ->
             let mut f = File::open(path).map_err(|e| e.to_string())?;
             let mut buffer = Vec::new();
             f.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
-            use std::io::Write;
             zip.write_all(&buffer).map_err(|e| e.to_string())?;
         }
 
