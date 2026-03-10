@@ -2,6 +2,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_double};
 use std::path::Path;
 use std::fs::File;
+use std::io::Read;
 use ort::session::Session;
 use ort::value::Value;
 use ndarray::Array3;
@@ -49,7 +50,6 @@ fn normalize_youtube_url(url: &str) -> String {
 fn get_ytdlp_path() -> String {
     let bin_name = if cfg!(windows) { "yt-dlp.exe" } else { "yt-dlp" };
     
-    // 1. Check next to the executable (bundled case)
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
             let bundled = dir.join(bin_name);
@@ -59,49 +59,55 @@ fn get_ytdlp_path() -> String {
         }
     }
 
-    // 2. Check current working directory
     let cwd_bin = Path::new(".").join(bin_name);
     if cwd_bin.exists() {
         return cwd_bin.to_string_lossy().to_string();
     }
 
-    // 3. Fallback to system PATH
     bin_name.to_string()
 }
 
 #[no_mangle]
 pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
-    if url.is_null() {
-        return CString::new("Error: Null URL").unwrap().into_raw();
-    }
-    let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy();
-    let url_str = normalize_youtube_url(&url_raw);
-    
-    let output = std::process::Command::new(get_ytdlp_path())
-        .arg("--print")
-        .arg("title")
-        .arg("--print")
-        .arg("uploader")
-        .arg("--no-playlist")
-        .arg(&url_str)
-        .output();
-
-    let result = match output {
-        Ok(out) => {
-            if out.status.success() {
-                let stdout = String::from_utf8_lossy(&out.stdout);
-                let mut lines = stdout.lines();
-                let title = lines.next().unwrap_or("Unknown Title");
-                let author = lines.next().unwrap_or("Unknown Author");
-                format!("Title: {}, Author: {}", title, author)
-            } else {
-                format!("Error: yt-dlp failed: {}", String::from_utf8_lossy(&out.stderr))
-            }
+    let result = std::panic::catch_unwind(|| {
+        if url.is_null() {
+            return "Error: Null URL".to_string();
         }
-        Err(e) => format!("Error: Failed to execute yt-dlp: {}", e),
-    };
+        let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy();
+        let url_str = normalize_youtube_url(&url_raw);
+        
+        println!("Rust: GetMetadata for URL: {}", url_str);
 
-    CString::new(result).unwrap().into_raw()
+        let output = std::process::Command::new(get_ytdlp_path())
+            .arg("--print")
+            .arg("title")
+            .arg("--print")
+            .arg("uploader")
+            .arg("--no-playlist")
+            .arg(&url_str)
+            .output();
+
+        match output {
+            Ok(out) => {
+                if out.status.success() {
+                    let stdout = String::from_utf8_lossy(&out.stdout);
+                    let mut lines = stdout.lines();
+                    let title = lines.next().unwrap_or("Unknown Title");
+                    let author = lines.next().unwrap_or("Unknown Author");
+                    format!("Title: {}, Author: {}", title, author)
+                } else {
+                    format!("Error: yt-dlp failed: {}", String::from_utf8_lossy(&out.stderr))
+                }
+            }
+            Err(e) => format!("Error: Failed to execute yt-dlp: {}", e),
+        }
+    });
+
+    let final_res = match result {
+        Ok(s) => s,
+        Err(_) => "Error: Panic in GetMetadata".to_string(),
+    };
+    CString::new(final_res).unwrap().into_raw()
 }
 
 fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
@@ -170,24 +176,24 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
 #[no_mangle]
 pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, cb: Option<ProgressCallback>) -> *mut c_char {
-    if url.is_null() || output_path.is_null() {
-        return CString::new("Error: Null arguments").unwrap().into_raw();
-    }
-    
-    let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy().to_string();
-    let url_str = normalize_youtube_url(&url_raw);
-    let out_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy().to_string();
+    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+        if url.is_null() || output_path.is_null() {
+            return Err("Error: Null arguments".to_string());
+        }
+        
+        let url_raw = unsafe { CStr::from_ptr(url) }.to_string_lossy().to_string();
+        let url_str = normalize_youtube_url(&url_raw);
+        let out_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy().to_string();
 
-    let result: Result<(), String> = (|| {
         let path = Path::new(&out_str);
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            let _ = std::fs::create_dir_all(parent);
         }
 
         let download_path = out_str.clone() + ".download";
         
         println!("Rust: Starting download via yt-dlp for {}", url_str);
-        
+
         let status = std::process::Command::new(get_ytdlp_path())
             .arg("-f")
             .arg("ba/best")
@@ -204,21 +210,9 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
             return Err(format!("yt-dlp failed with exit code: {:?}", status.code()));
         }
 
-        // Check if the file was actually created (yt-dlp sometimes appends extension)
-        println!("Rust: Checking for download file at {}", download_path);
-        
-        if let Ok(entries) = std::fs::read_dir(".") {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    println!("Rust: Local file found: {:?}", entry.file_name());
-                }
-            }
-        }
-
         let actual_download_path = if Path::new(&download_path).exists() {
             download_path.clone()
         } else {
-            // Try common extensions
             let mut found = None;
             for ext in &["m4a", "webm", "opus", "mp3"] {
                 let p = format!("{}.{}", download_path, ext);
@@ -230,11 +224,11 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
             found.ok_or_else(|| "yt-dlp finished but no output file was found".to_string())?
         };
 
-        println!("Rust: Download complete, converting to WAV...");
         if let Some(callback) = cb {
             callback(0.5);
         }
 
+        println!("Rust: Download complete, converting to WAV...");
         convert_to_wav(&actual_download_path, &out_str)?;
         
         if let Some(callback) = cb {
@@ -243,11 +237,12 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
 
         let _ = std::fs::remove_file(actual_download_path);
         Ok(())
-    })();
+    });
 
     match result {
-        Ok(_) => std::ptr::null_mut(),
-        Err(e) => CString::new(format!("Error: {}", e)).unwrap().into_raw(),
+        Ok(Ok(_)) => std::ptr::null_mut(),
+        Ok(Err(e)) => CString::new(e).unwrap().into_raw(),
+        Err(_) => CString::new("Error: Panic in DownloadAudio").unwrap().into_raw(),
     }
 }
 
@@ -256,34 +251,66 @@ struct Stemmer {
 }
 
 static STEMMER: Lazy<Mutex<Option<Stemmer>>> = Lazy::new(|| Mutex::new(None));
+static ORT_INITIALIZED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 
 #[no_mangle]
 pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char) -> *mut c_char {
-    let model_path_str = unsafe { CStr::from_ptr(model_path) }.to_string_lossy();
-    let lib_path_str = if !lib_path.is_null() {
-        Some(unsafe { CStr::from_ptr(lib_path) }.to_string_lossy())
-    } else {
-        None
-    };
-    
-    let result: Result<(), String> = (|| {
-        if let Some(lp) = lib_path_str {
-            ort::init_from(&*lp).map_err(|e| e.to_string())?;
+    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+        let model_path_str = unsafe { CStr::from_ptr(model_path) }.to_string_lossy().to_string();
+        let lib_path_str = if !lib_path.is_null() {
+            Some(unsafe { CStr::from_ptr(lib_path) }.to_string_lossy().to_string())
+        } else {
+            None
+        };
+        
+        println!("Rust: InitStemmer entered. Model: {}", model_path_str);
+
+        if !Path::new(&model_path_str).exists() {
+            return Err(format!("Model file not found: {}", model_path_str));
         }
 
+        let mut init_guard = ORT_INITIALIZED.lock().unwrap();
+        if !*init_guard {
+            if let Some(lp) = lib_path_str {
+                println!("Rust: Initializing ORT from {}", lp);
+                if !Path::new(&lp).exists() {
+                    return Err(format!("ORT library not found: {}", lp));
+                }
+                unsafe {
+                    ort::init_from(&lp).map_err(|e| e.to_string())?;
+                }
+            } else {
+                println!("Rust: Initializing ORT with default strategy");
+                let _ = ort::init();
+            }
+            *init_guard = true;
+            println!("Rust: ORT initialized successfully");
+        } else {
+            println!("Rust: ORT already initialized");
+        }
+
+        println!("Rust: Creating session...");
         let session = Session::builder()
             .map_err(|e| e.to_string())?
-            .commit_from_file(&*model_path_str)
+            .commit_from_file(&model_path_str)
             .map_err(|e| e.to_string())?;
 
+        println!("Rust: Session created successfully");
         let mut guard = STEMMER.lock().unwrap();
         *guard = Some(Stemmer { session });
         Ok(())
-    })();
+    });
 
     match result {
-        Ok(_) => std::ptr::null_mut(),
-        Err(e) => CString::new(format!("Error: {}", e)).unwrap().into_raw(),
+        Ok(Ok(_)) => std::ptr::null_mut(),
+        Ok(Err(e)) => {
+            println!("Rust: InitStemmer failed: {}", e);
+            CString::new(e).unwrap().into_raw()
+        },
+        Err(_) => {
+            println!("Rust: InitStemmer panicked!");
+            CString::new("Error: Panic in InitStemmer").unwrap().into_raw()
+        }
     }
 }
 
@@ -294,22 +321,24 @@ pub extern "C" fn SplitAudio(
     stem_names: *const c_char,
     cb: Option<ProgressCallback>,
 ) -> *mut c_char {
-    let input_path_str = unsafe { CStr::from_ptr(input_path) }.to_string_lossy();
-    let output_dir_str = unsafe { CStr::from_ptr(output_dir) }.to_string_lossy();
-    let stem_names_str = unsafe { CStr::from_ptr(stem_names) }.to_string_lossy();
-    let stem_names_vec: Vec<&str> = stem_names_str.split(';').collect();
+    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+        let input_path_str = unsafe { CStr::from_ptr(input_path) }.to_string_lossy().to_string();
+        let output_dir_str = unsafe { CStr::from_ptr(output_dir) }.to_string_lossy().to_string();
+        let stem_names_str = unsafe { CStr::from_ptr(stem_names) }.to_string_lossy().to_string();
+        let stem_names_vec: Vec<&str> = stem_names_str.split(';').collect();
 
-    let result: Result<(), String> = (|| {
+        println!("Rust: SplitAudio starting for {}", input_path_str);
+
         let mut guard = STEMMER.lock().unwrap();
         let stemmer = guard.as_mut().ok_or("Stemmer not initialized")?;
 
-        let mut reader = hound::WavReader::open(&*input_path_str).map_err(|e| e.to_string())?;
+        let mut reader = hound::WavReader::open(&input_path_str).map_err(|e| e.to_string())?;
         let spec = reader.spec();
         let samples: Vec<f32> = reader.samples::<i16>().map(|s| s.unwrap() as f32 / 32767.0).collect();
         let num_channels = spec.channels as usize;
         let num_frames = samples.len() / num_channels;
 
-        let chunk_size = 343980; // Match export dummy input size
+        let chunk_size = 343980;
         let num_chunks = (num_frames + chunk_size - 1) / chunk_size;
 
         let mut output_stems: Vec<Vec<f32>> = vec![Vec::with_capacity(samples.len()); stem_names_vec.len()];
@@ -327,7 +356,6 @@ pub extern "C" fn SplitAudio(
                 }
             }
 
-            println!("Rust: Running inference for chunk {}/{} (len={}, padded to {})", c+1, num_chunks, current_chunk_len, chunk_size);
             let input_value = Value::from_array(input_tensor).map_err(|e| e.to_string())?;
             let outputs = stemmer.session.run(ort::inputs![input_value]).map_err(|e| e.to_string())?;
             
@@ -337,8 +365,6 @@ pub extern "C" fn SplitAudio(
             for s in 0..stem_names_vec.len() {
                 for i in 0..current_chunk_len {
                     for ch in 0..2 {
-                        // shape is [1, Stems, 2, Time]
-                        // Note: chunk_size here is fixed at 343980
                         let idx = s * 2 * chunk_size + ch * chunk_size + i;
                         output_stems[s].push(output_data[idx]);
                     }
@@ -350,9 +376,9 @@ pub extern "C" fn SplitAudio(
             }
         }
 
-        std::fs::create_dir_all(&*output_dir_str).map_err(|e| e.to_string())?;
+        let _ = std::fs::create_dir_all(&output_dir_str);
         for (idx, name) in stem_names_vec.iter().enumerate() {
-            let path = Path::new(&*output_dir_str).join(format!("{}.wav", name));
+            let path = Path::new(&output_dir_str).join(format!("{}.wav", name));
             let mut writer = hound::WavWriter::create(path, spec).map_err(|e| e.to_string())?;
             for s in &output_stems[idx] {
                 writer.write_sample((s * 32767.0) as i16).map_err(|e| e.to_string())?;
@@ -364,11 +390,12 @@ pub extern "C" fn SplitAudio(
         }
 
         Ok(())
-    })();
+    });
 
     match result {
-        Ok(_) => std::ptr::null_mut(),
-        Err(e) => CString::new(format!("Error: {}", e)).unwrap().into_raw(),
+        Ok(Ok(_)) => std::ptr::null_mut(),
+        Ok(Err(e)) => CString::new(e).unwrap().into_raw(),
+        Err(_) => CString::new("Error: Panic in SplitAudio").unwrap().into_raw(),
     }
 }
 
@@ -379,12 +406,12 @@ pub extern "C" fn MixStems(
     weights_len: usize,
     output_path: *const c_char,
 ) -> *mut c_char {
-    let paths_str = unsafe { CStr::from_ptr(paths) }.to_string_lossy();
-    let paths_vec: Vec<&str> = paths_str.split(';').collect();
-    let weights_slice = unsafe { std::slice::from_raw_parts(weights, weights_len) };
-    let output_path_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy();
+    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+        let paths_str = unsafe { CStr::from_ptr(paths) }.to_string_lossy();
+        let paths_vec: Vec<&str> = paths_str.split(';').collect();
+        let weights_slice = unsafe { std::slice::from_raw_parts(weights, weights_len) };
+        let output_path_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy();
 
-    let result: Result<(), String> = (|| {
         if paths_vec.is_empty() {
             return Err("No stems to mix".to_string());
         }
@@ -423,21 +450,22 @@ pub extern "C" fn MixStems(
         }
 
         Ok(())
-    })();
+    });
 
     match result {
-        Ok(_) => std::ptr::null_mut(),
-        Err(e) => CString::new(format!("Error: {}", e)).unwrap().into_raw(),
+        Ok(Ok(_)) => std::ptr::null_mut(),
+        Ok(Err(e)) => CString::new(e).unwrap().into_raw(),
+        Err(_) => CString::new("Error: Panic in MixStems").unwrap().into_raw(),
     }
 }
 
 #[no_mangle]
 pub extern "C" fn CreateZip(paths: *const c_char, output_path: *const c_char) -> *mut c_char {
-    let paths_str = unsafe { CStr::from_ptr(paths) }.to_string_lossy();
-    let paths_vec: Vec<&str> = paths_str.split(';').collect();
-    let output_path_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy();
+    let result = std::panic::catch_unwind(|| -> Result<(), String> {
+        let paths_str = unsafe { CStr::from_ptr(paths) }.to_string_lossy();
+        let paths_vec: Vec<&str> = paths_str.split(';').collect();
+        let output_path_str = unsafe { CStr::from_ptr(output_path) }.to_string_lossy();
 
-    let result: Result<(), String> = (|| {
         let file = File::create(&*output_path_str).map_err(|e| e.to_string())?;
         let mut zip = zip::ZipWriter::new(file);
         let options = zip::write::SimpleFileOptions::default()
@@ -449,16 +477,19 @@ pub extern "C" fn CreateZip(paths: *const c_char, output_path: *const c_char) ->
             
             zip.start_file(name, options).map_err(|e| e.to_string())?;
             let mut f = File::open(path).map_err(|e| e.to_string())?;
-            std::io::copy(&mut f, &mut zip).map_err(|e| e.to_string())?;
+            let mut buffer = Vec::new();
+            f.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+            std::io::Write::write_all(&mut zip, &buffer).map_err(|e| e.to_string())?;
         }
 
         zip.finish().map_err(|e| e.to_string())?;
         Ok(())
-    })();
+    });
 
     match result {
-        Ok(_) => std::ptr::null_mut(),
-        Err(e) => CString::new(format!("Error: {}", e)).unwrap().into_raw(),
+        Ok(Ok(_)) => std::ptr::null_mut(),
+        Ok(Err(e)) => CString::new(e).unwrap().into_raw(),
+        Err(_) => CString::new("Error: Panic in CreateZip").unwrap().into_raw(),
     }
 }
 
