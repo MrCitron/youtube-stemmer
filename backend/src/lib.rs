@@ -283,22 +283,42 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                 if !Path::new(&lp).exists() {
                     return Err(format!("ORT library not found: {}", lp));
                 }
-                println!("Rust: Calling ort::init_from().commit()...");
-                unsafe {
-                    let _ = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
+                
+                // Manual dlopen check to see if it hangs there
+                println!("Rust: Manual dlopen check starting...");
+                #[cfg(unix)]
+                {
+                    let lp_c = CString::new(lp.clone()).unwrap();
+                    let handle = unsafe { libc::dlopen(lp_c.as_ptr(), libc::RTLD_NOW) };
+                    if handle.is_null() {
+                        let err = unsafe { CStr::from_ptr(libc::dlerror()) }.to_string_lossy();
+                        println!("Rust: Manual dlopen failed: {}", err);
+                        return Err(format!("dlopen failed: {}", err));
+                    }
+                    println!("Rust: Manual dlopen success, closing handle...");
+                    unsafe { libc::dlclose(handle) };
                 }
+
+                println!("Rust: Calling ort::init_from(&lp)...");
+                let builder = unsafe {
+                    ort::init_from(&lp).map_err(|e| e.to_string())?
+                };
+                
+                println!("Rust: Calling builder.commit()...");
+                builder.commit();
+                println!("Rust: builder.commit() returned");
             } else {
                 println!("Rust: Initializing ORT with default strategy...");
                 let _ = ort::init().commit();
             }
             let mut init_guard = ORT_INITIALIZED.lock().unwrap();
             *init_guard = true;
-            println!("Rust: ORT initialized successfully");
+            println!("Rust: ORT initialization block finished");
         } else {
             println!("Rust: ORT already initialized");
         }
 
-        println!("Rust: Creating session...");
+        println!("Rust: Creating session for model at {}...", model_path_str);
         let session = Session::builder()
             .map_err(|e| e.to_string())?
             .commit_from_file(&model_path_str)
