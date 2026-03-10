@@ -143,7 +143,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         actions: [
           if (_items.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.delete_sweep, color: Colors.red),
+              icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
               onPressed: _clearAllHistory,
               tooltip: 'Clear All',
             ),
@@ -155,31 +155,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 if (_items.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('Total Size on Disk: $_totalSize', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.storage, size: 16, color: Theme.of(context).colorScheme.secondary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Total Storage: $_totalSize',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 Expanded(
                   child: _items.isEmpty
-                      ? const Center(child: Text('No history items found.'))
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history_outlined, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
+                              const SizedBox(height: 16),
+                              Text('No history items found', style: Theme.of(context).textTheme.titleMedium),
+                            ],
+                          ),
+                        )
                       : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           itemCount: _items.length,
                           itemBuilder: (context, index) {
                             final item = _items[index];
                             final size = _itemSizes[item.id] ?? '...';
                             final isLocal = item.url.startsWith('local:');
 
-                            return ListTile(
-                              leading: Icon(isLocal ? Icons.folder : Icons.cloud_download),
-                              title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              subtitle: Text('${item.createdAt.toString().split('.').first} • $size'),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _deleteItem(item),
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isLocal 
+                                    ? Theme.of(context).colorScheme.secondaryContainer 
+                                    : Theme.of(context).colorScheme.primaryContainer,
+                                  child: Icon(
+                                    isLocal ? Icons.folder_outlined : Icons.cloud_download_outlined,
+                                    color: isLocal 
+                                      ? Theme.of(context).colorScheme.onSecondaryContainer 
+                                      : Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                                title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                subtitle: Text('${item.createdAt.toString().split(' ').first} • $size'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  onPressed: () => _deleteItem(item),
+                                ),
+                                onTap: () {
+                                  widget.onSelect(item);
+                                  Navigator.pop(context);
+                                },
                               ),
-                              onTap: () {
-                                widget.onSelect(item);
-                                Navigator.pop(context);
-                              },
                             );
                           },
                         ),

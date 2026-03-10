@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YouTube Stemmer Main Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f0df2",
+                        "background-light": "#f7f5f8",
+                        "background-dark": "#191022",
+                        "surface-dark": "#251b30",
+                        "border-dark": "#3d2e4d",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #7f0df2;
+            cursor: pointer;
+            margin-top: -4px;
+            box-shadow: 0 0 8px rgba(127, 13, 242, 0.6);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: linear-gradient(to right, #7f0df2 30%, #3d2e4d 30%);
+            border-radius: 2px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display">
+<input class="hidden peer" id="log-modal-toggle" type="checkbox"/>
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden">
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 sticky top-0 z-20 border-b border-primary/10">
+<h1 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1" style="">YouTube Stemmer</h1>
+<div class="flex gap-2">
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary" style="">
+<span class="material-symbols-outlined" style="">history</span>
+</button>
+<label class="flex items-center justify-center px-4 h-10 rounded-full bg-primary/10 text-primary cursor-pointer text-sm font-bold gap-1 transition-colors hover:bg-primary/20" for="log-modal-toggle">
+<span class="material-symbols-outlined text-[18px]">terminal</span> Logs
+</label>
+</div>
+</header>
+<main class="flex-1 pb-8">
+<div class="p-4">
+<div class="bg-surface-dark rounded-xl p-5 shadow-xl border border-border-dark">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" style="">auto_fix_high</span>
+</div>
+<div>
+<h2 class="text-lg font-bold" style="">Process Video</h2>
+<p class="text-slate-400 text-sm" style="">Extract stems using AI</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="relative">
+<input class="w-full bg-background-dark border border-border-dark rounded-lg py-3 px-4 text-sm focus:ring-primary focus:border-primary transition-all" placeholder="Paste YouTube URL here..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-500" style="">link</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20" style="">
+<span class="material-symbols-outlined" style="">rocket_launch</span>
+                                Process
+                            </button>
+<button class="w-14 bg-surface-dark border border-border-dark text-slate-300 rounded-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all" style="">
+<span class="material-symbols-outlined" style="">folder_open</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<div class="bg-surface-dark/50 border border-border-dark rounded-xl p-4 space-y-4">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium uppercase tracking-wider text-slate-400">
+<span class="" style="">Downloading Video</span>
+<span class="text-primary" style="">85% • 0:04 ETA</span>
+</div>
+<div class="w-full bg-background-dark rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[85%]"></div>
+</div>
+</div>
+<div class="space-y-2 opacity-50">
+<div class="flex justify-between text-xs font-medium uppercase tracking-wider text-slate-400">
+<span class="" style="">AI Stemming</span>
+<span class="" style="">Waiting...</span>
+</div>
+<div class="w-full bg-background-dark rounded-full h-1.5">
+<div class="bg-primary/40 h-full rounded-full w-0"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<div class="bg-surface-dark border border-border-dark rounded-xl p-5 flex flex-col items-center">
+<h3 class="text-white font-bold text-lg truncate w-full text-center mb-4">Synthwave Night Mix</h3>
+<div class="w-full flex items-center gap-3 mb-6">
+<span class="text-slate-400 text-xs font-mono">01:24</span>
+<input class="w-full h-1.5 bg-background-dark rounded-full appearance-none outline-none" max="100" min="0" type="range" value="30"/>
+<span class="text-slate-400 text-xs font-mono">04:30</span>
+</div>
+<div class="flex items-center justify-center gap-6 text-slate-300">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-3xl">replay_10</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-3xl">stop_circle</span></button>
+<button class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 transition-transform hover:scale-105 shadow-lg shadow-primary/20"><span class="material-symbols-outlined text-4xl">play_arrow</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-3xl">forward_10</span></button>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4 px-1" style="">Studio Mixer</h3>
+<div class="grid grid-cols-4 gap-3">
+<div class="flex flex-col items-center bg-surface-dark border border-border-dark rounded-xl py-4 px-2">
+<span class="text-[10px] font-bold uppercase text-slate-400 mb-2" style="">Vocals</span>
+<div class="w-1.5 h-32 bg-background-dark rounded-full relative mb-4 flex flex-col justify-end overflow-hidden">
+<div class="absolute bottom-1/4 left-0 right-0 h-4 bg-primary rounded shadow-[0_0_8px_rgba(127,13,242,0.6)] z-10"></div>
+<div class="w-full bg-primary/40 h-[65%] rounded-full"></div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">M</button>
+<button class="w-8 h-8 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-bold text-primary" style="">S</button>
+</div>
+</div>
+<div class="flex flex-col items-center bg-surface-dark border border-border-dark rounded-xl py-4 px-2">
+<span class="text-[10px] font-bold uppercase text-slate-400 mb-2" style="">Drums</span>
+<div class="w-1.5 h-32 bg-background-dark rounded-full relative mb-4 flex flex-col justify-end overflow-hidden">
+<div class="absolute bottom-1/3 left-0 right-0 h-4 bg-primary rounded shadow-[0_0_8px_rgba(127,13,242,0.6)] z-10"></div>
+<div class="w-full bg-primary/40 h-[45%] rounded-full"></div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">M</button>
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">S</button>
+</div>
+</div>
+<div class="flex flex-col items-center bg-surface-dark border border-border-dark rounded-xl py-4 px-2">
+<span class="text-[10px] font-bold uppercase text-slate-400 mb-2" style="">Bass</span>
+<div class="w-1.5 h-32 bg-background-dark rounded-full relative mb-4 flex flex-col justify-end overflow-hidden">
+<div class="absolute bottom-[20%] left-0 right-0 h-4 bg-primary rounded shadow-[0_0_8px_rgba(127,13,242,0.6)] z-10"></div>
+<div class="w-full bg-primary/40 h-[80%] rounded-full"></div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">M</button>
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">S</button>
+</div>
+</div>
+<div class="flex flex-col items-center bg-surface-dark border border-border-dark rounded-xl py-4 px-2">
+<span class="text-[10px] font-bold uppercase text-slate-400 mb-2" style="">Other</span>
+<div class="w-1.5 h-32 bg-background-dark rounded-full relative mb-4 flex flex-col justify-end overflow-hidden">
+<div class="absolute bottom-[60%] left-0 right-0 h-4 bg-primary rounded shadow-[0_0_8px_rgba(127,13,242,0.6)] z-10"></div>
+<div class="w-full bg-primary/40 h-[30%] rounded-full"></div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">M</button>
+<button class="w-8 h-8 rounded-lg bg-background-dark border border-border-dark flex items-center justify-center text-xs font-bold text-slate-400" style="">S</button>
+</div>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<div class="bg-surface-dark border border-border-dark rounded-xl p-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold" style="">Export Stems</h3>
+<div class="flex bg-background-dark p-1 rounded-lg text-[10px] font-bold border border-border-dark">
+<button class="px-3 py-1 bg-primary text-white rounded-md" style="">WAV</button>
+<button class="px-3 py-1 text-slate-400" style="">MP3</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 bg-primary/20 text-primary border border-primary/30 py-3 rounded-lg font-bold text-sm" style="">
+<span class="material-symbols-outlined text-lg" style="">folder_zip</span>
+                            Export ZIP
+                        </button>
+<button class="flex items-center justify-center gap-2 bg-primary/20 text-primary border border-primary/30 py-3 rounded-lg font-bold text-sm" style="">
+<span class="material-symbols-outlined text-lg" style="">equalizer</span>
+                            Mixdown
+                        </button>
+</div>
+</div>
+</div>
+<div class="px-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4 px-1" style="">Recent Projects</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 bg-surface-dark/40 p-3 rounded-xl border border-border-dark">
+<div class="w-12 h-12 rounded-lg bg-cover bg-center" data-alt="Video thumbnail placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAp40ln4ZZkdi7iFUOtJ31i18e9DurHXv3edsQXF3Km9_Gg-UeoFuuavQEqvFNebMS9McnIg_MTX66niIsTpCxiL1c3cIH3GiOFom_dPH0emCTfafIXpN69xXWLqehAeNI-jWu7-AoGLZVNj7kBGehLvMQllaBO9oG90qxLq9E9nB_tysR4932dmv1GeucCZWxnVTDnsrWXUiCLgj7TJE49x8yLWOQTkSQW4kIx-YbMhPn_SpscBIfVahG_TGnYheeOC4ZKsAHVkP1_");'></div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate" style="">Synthwave Night Mix</h4>
+<p class="text-xs text-slate-500" style="">4 stems • 2 hours ago</p>
+</div>
+<button class="text-slate-500" style=""><span class="material-symbols-outlined" style="">more_vert</span></button>
+</div>
+<div class="flex items-center gap-3 bg-surface-dark/40 p-3 rounded-xl border border-border-dark">
+<div class="w-12 h-12 rounded-lg bg-cover bg-center" data-alt="Video thumbnail placeholder 2" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDORKDwtj05-QCkW5EBKb77xRowPNL50d34Kme2B6YuF0HbQGNJc-wymAf7lRFUdgUsT-PGj3OLnAERk_2i6858HStX3S5rktzHmuIuoHRolFov-iSnyg0ttmxtqlqLFq2yIOslz_LxHGmWuIaVr_4KLKeZATBYXQhnQhzPtiwQ_bL_JnHS-mCPtMNr7j8oawxKiMqMbf4ocFGVl8ADzJ0_2s7RfkWIKVjd1ip2VpcVTTnPfMq5MEbw-7xkfdfH4a85WLqzKEKu67ex");'></div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate" style="">Acoustic Session Vol 1</h4>
+<p class="text-xs text-slate-500" style="">2 stems • Yesterday</p>
+</div>
+<button class="text-slate-500" style=""><span class="material-symbols-outlined" style="">more_vert</span></button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<div class="fixed inset-0 z-50 hidden peer-checked:flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+<div class="bg-[#0f1015] w-full max-w-md rounded-xl border border-border-dark flex flex-col h-[60vh] shadow-2xl overflow-hidden">
+<div class="flex items-center justify-between px-4 py-3 border-b border-border-dark/50 bg-surface-dark/50">
+<span class="text-xs font-mono text-slate-400">system.log</span>
+<div class="flex gap-4">
+<button class="text-xs text-primary font-bold flex items-center gap-1 hover:text-white transition-colors"><span class="material-symbols-outlined text-[16px]">content_copy</span> Copy</button>
+<label class="text-slate-400 hover:text-white cursor-pointer flex items-center" for="log-modal-toggle"><span class="material-symbols-outlined text-[18px]">close</span></label>
+</div>
+</div>
+<div class="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed text-green-400 space-y-2 no-scrollbar">
+<p>[INFO] Starting extraction process...</p>
+<p>[INFO] Connecting to backend server [127.0.0.1:8080]</p>
+<p>[INFO] Downloading audio stream from youtube.com/watch?v=synthwave</p>
+<p>[WARN] High latency detected, retrying chunk 4...</p>
+<p>[INFO] Download complete. Initializing AI models.</p>
+<p>[INFO] Loading Demucs v4 model to VRAM...</p>
+<p>[INFO] Separating Vocals: 45%</p>
+<p class="animate-pulse">_</p>
+</div>
+</div>
+</div>
+</body></html>

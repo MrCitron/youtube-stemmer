@@ -27,67 +27,92 @@ class _ExportUIState extends State<ExportUI> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Export Options',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'EXPORT STEMS',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: SegmentedButton<ExportFormat>(
+                segments: const [
+                  ButtonSegment(value: ExportFormat.wav, label: Text('WAV', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold))),
+                  ButtonSegment(value: ExportFormat.mp3, label: Text('MP3', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold))),
+                ],
+                selected: {_selectedFormat},
+                onSelectionChanged: widget.isProcessing ? null : (v) {
+                  setState(() => _selectedFormat = v.first);
+                },
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (widget.isProcessing)
+          Center(
+            child: Column(
               children: [
-                const Text('Format: '),
-                DropdownButton<ExportFormat>(
-                  value: _selectedFormat,
-                  items: ExportFormat.values.map((f) {
-                    return DropdownMenuItem(
-                      value: f,
-                      child: Text(f.name.toUpperCase()),
-                    );
-                  }).toList(),
-                  onChanged: widget.isProcessing
-                      ? null
-                      : (v) {
-                          if (v != null) setState(() => _selectedFormat = v);
-                        },
+                const SizedBox(
+                  width: double.infinity,
+                  child: LinearProgressIndicator(borderRadius: BorderRadius.all(Radius.circular(8))),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.statusMessage ?? 'Processing...',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            if (widget.isProcessing)
-              Center(
-                child: Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 8),
-                    Text(widget.statusMessage ?? 'Processing...'),
-                  ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => widget.onExportZip(_selectedFormat),
+                  icon: const Icon(Icons.folder_zip_outlined, size: 18),
+                  label: const Text('Export ZIP'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-              )
-            else
-              Wrap(
-                spacing: 8.0,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () => widget.onExportZip(_selectedFormat),
-                    icon: const Icon(Icons.archive),
-                    label: const Text('Export ALL (ZIP)'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => widget.onExportMix(_selectedFormat),
-                    icon: const Icon(Icons.merge),
-                    label: const Text('Export Mixdown'),
-                  ),
-                ],
               ),
-          ],
-        ),
-      ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => widget.onExportMix(_selectedFormat),
+                  icon: const Icon(Icons.equalizer_rounded, size: 18),
+                  label: const Text('Mixdown'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

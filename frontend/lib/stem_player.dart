@@ -253,77 +253,164 @@ class _StemPlayerState extends State<StemPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_players.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Column(
       children: [
+        // Title
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.only(bottom: 16.0),
           child: Text(
             widget.videoTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Text(_position.toString().split('.').first),
-              Expanded(
-                child: Slider(
-                  value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble()),
-                  min: 0,
-                  max: _duration.inMilliseconds.toDouble() == 0 ? 1 : _duration.inMilliseconds.toDouble(),
-                  onChanged: (v) => _seek(Duration(milliseconds: v.toInt())),
+
+        // Player Controls Section
+        Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Timeline
+                Row(
+                  children: [
+                    Text(
+                      _position.toString().split('.').first.padLeft(8, '0').substring(2),
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    ),
+                    Expanded(
+                      child: Slider(
+                        value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble()),
+                        min: 0,
+                        max: _duration.inMilliseconds.toDouble() == 0 ? 1 : _duration.inMilliseconds.toDouble(),
+                        onChanged: (v) => _seek(Duration(milliseconds: v.toInt())),
+                      ),
+                    ),
+                    Text(
+                      _duration.toString().split('.').first.padLeft(8, '0').substring(2),
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    ),
+                  ],
                 ),
-              ),
-              Text(_duration.toString().split('.').first),
-            ],
+                const SizedBox(height: 8),
+                // Playback Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.replay_10),
+                      onPressed: _skipBack,
+                      tooltip: 'Back 10s',
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.stop_rounded),
+                      onPressed: _stop,
+                      tooltip: 'Stop',
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton.filled(
+                      icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                      iconSize: 40,
+                      onPressed: _togglePlay,
+                      tooltip: _isPlaying ? 'Pause' : 'Play',
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.forward_10),
+                      onPressed: _skipForward,
+                      tooltip: 'Forward 10s',
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.fast_rewind),
-              onPressed: _skipBack,
-              tooltip: 'Back 10s',
+
+        const SizedBox(height: 24),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'STUDIO MIXER',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 2,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
-            IconButton(
-              icon: const Icon(Icons.stop),
-              onPressed: _stop,
-              tooltip: 'Stop',
-            ),
-            IconButton(
-              icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-              onPressed: _togglePlay,
-              tooltip: _isPlaying ? 'Pause' : 'Play',
-            ),
-            IconButton(
-              icon: const Icon(Icons.fast_forward),
-              onPressed: _skipForward,
-              tooltip: 'Forward 10s',
-            ),
-          ],
+          ),
         ),
-        ...widget.stemNames.map((stem) {
-          final hasFile = _players.containsKey(stem);
-          return ListTile(
-            title: Text(stem.toUpperCase()),
-            subtitle: hasFile
-                ? Slider(
-                    value: _players[stem]?.volume ?? 1.0,
-                    onChanged: (v) => _setVolume(stem, v),
-                  )
-                : const Text('File not found'),
-            trailing: hasFile
-                ? IconButton(
-                    icon: Icon(_players[stem]?.volume == 0 ? Icons.volume_off : Icons.volume_up),
-                    onPressed: () => _setVolume(stem, _players[stem]?.volume == 0 ? 1.0 : 0.0),
-                  )
-                : null,
-          );
-        }),
-        const Divider(),
+        const SizedBox(height: 16),
+
+        // Studio Mixer (Grid of vertical lanes)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: widget.stemNames.map((stem) {
+                final hasFile = _players.containsKey(stem);
+                final volume = _players[stem]?.volume ?? 1.0;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            stem.toUpperCase(),
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 120,
+                            child: RotatedBox(
+                              quarterTurns: 3,
+                              child: Slider(
+                                value: volume,
+                                onChanged: hasFile ? (v) => _setVolume(stem, v) : null,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Mute/Solo logic simplified
+                          IconButton(
+                            icon: Icon(volume == 0 ? Icons.volume_off : Icons.volume_up, size: 18),
+                            onPressed: hasFile ? () => _setVolume(stem, volume == 0 ? 1.0 : 0.0) : null,
+                            style: IconButton.styleFrom(
+                              backgroundColor: volume == 0 ? Colors.red.withOpacity(0.1) : null,
+                              foregroundColor: volume == 0 ? Colors.red : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          }
+        ),
+
+        const Divider(height: 48),
         ExportUI(
           stemVolumes: _players.map((k, v) => MapEntry(k, v.volume)),
           onExportZip: _handleExportZip,

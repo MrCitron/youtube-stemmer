@@ -5,6 +5,7 @@ import 'model_downloader.dart';
 import 'model_download_dialog.dart';
 import 'history_service.dart';
 import 'history_screen.dart';
+import 'log_service.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -44,19 +45,64 @@ class ProgressTracker {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.dark; // Default to Dark for the studio look
+
+  static const Color primaryColor = Color(0xFF7F0DF2);
+  static const Color backgroundDark = Color(0xFF191022);
+  static const Color surfaceDark = Color(0xFF251B30);
+  static const Color borderDark = Color(0xFF3D2E4D);
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'YouTube Stemmer',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
+        fontFamily: 'Inter',
       ),
-      home: const MyHomePage(
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryColor,
+          brightness: Brightness.dark,
+          surface: backgroundDark,
+        ).copyWith(
+          surface: backgroundDark,
+          onSurface: Colors.white,
+          surfaceContainerHighest: surfaceDark,
+          outline: borderDark,
+        ),
+        scaffoldBackgroundColor: backgroundDark,
+        useMaterial3: true,
+        fontFamily: 'Inter',
+        cardTheme: CardThemeData(
+          color: surfaceDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: borderDark),
+          ),
+          elevation: 0,
+        ),
+      ),
+      themeMode: _themeMode,
+      home: MyHomePage(
         title: 'YouTube Stemmer',
+        onToggleTheme: _toggleTheme,
+        themeMode: _themeMode,
       ),
     );
   }
@@ -66,9 +112,13 @@ class MyHomePage extends StatefulWidget {
   const MyHomePage({
     super.key,
     required this.title,
+    required this.onToggleTheme,
+    required this.themeMode,
   });
 
   final String title;
+  final VoidCallback onToggleTheme;
+  final ThemeMode themeMode;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -117,12 +167,13 @@ class _MyHomePageState extends State<MyHomePage> {
   void _processUrl() async {
     final url = _urlController.text;
     if (url.isEmpty) return;
+    
+    LogService().add('Starting extraction process for: $url');
 
     if (!await _checkModel(_selectedModel)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Stemming skipped: ${_selectedModel.name} not initialized.')),
-        );
+        setState(() => _errorMessage = 'Stemming skipped: ${_selectedModel.name} not initialized.');
+        LogService().add('Error: Model not initialized');
       }
       return;
     }
@@ -422,8 +473,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: const Text('YouTube Stemmer', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -435,6 +485,28 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               );
             },
+            tooltip: 'History',
+          ),
+          TextButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const LogOverlay(),
+              );
+            },
+            icon: const Icon(Icons.terminal, size: 18),
+            label: const Text('Logs'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              shape: const StadiumBorder(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(widget.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: widget.onToggleTheme,
+            tooltip: 'Toggle Theme',
           ),
         ],
       ),
@@ -442,89 +514,155 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              // Error Display (Modernized)
               if (_errorMessage != null)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red),
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Error', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.error)),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => setState(() => _errorMessage = null),
+                            ),
+                          ],
+                        ),
+                        SelectableText(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer)),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: _errorMessage!));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error copied to clipboard')));
+                          },
+                          icon: const Icon(Icons.copy, size: 16),
+                          label: const Text('Copy Message'),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+
+              // Process Video Card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Error', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () => setState(() => _errorMessage = null),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.auto_fix_high, color: Theme.of(context).colorScheme.primary),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Process Video', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                              Text('Extract stems using AI', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                            ],
                           ),
                         ],
                       ),
-                      SelectableText(_errorMessage!),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: _errorMessage!));
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error copied to clipboard')));
-                        },
-                        icon: const Icon(Icons.copy, size: 16),
-                        label: const Text('Copy Message'),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _urlController,
+                        decoration: InputDecoration(
+                          hintText: 'Paste YouTube URL here...',
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          prefixIcon: const Icon(Icons.link, size: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        enabled: !_isProcessing,
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _isProcessing ? null : _processUrl,
+                              icon: const Icon(Icons.rocket_launch, size: 18),
+                              label: const Text('Process'),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: _isProcessing ? null : _loadLocalStems,
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Icon(Icons.folder_open_outlined),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_isProcessing) ...[
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_downloadProgress < 1.0 ? 'Downloading Audio...' : 'Stemming Audio...', 
+                              style: const TextStyle(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 8),
+                            if (_downloadProgress < 1.0) ...[
+                              LinearProgressIndicator(value: _downloadProgress, borderRadius: BorderRadius.circular(8)),
+                              const SizedBox(height: 4),
+                              Text('${(_downloadProgress * 100).toStringAsFixed(1)}%${_downloadEta != null ? " (ETA: $_downloadEta)" : ""}', style: Theme.of(context).textTheme.bodySmall),
+                            ] else ...[
+                              LinearProgressIndicator(value: _stemmingProgress, borderRadius: BorderRadius.circular(8)),
+                              const SizedBox(height: 4),
+                              Text('${(_stemmingProgress * 100).toStringAsFixed(1)}%${_stemmingEta != null ? " (ETA: $_stemmingEta)" : ""}', style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-              TextField(
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  labelText: 'YouTube URL',
-                  hintText: 'Enter YouTube video URL',
-                ),
-                enabled: !_isProcessing,
               ),
-              const SizedBox(height: 20),
-              if (_isProcessing) ...[
-                Column(
-                  children: [
-                    const Text('Downloading Video...'),
-                    LinearProgressIndicator(value: _downloadProgress),
-                    Text('${(_downloadProgress * 100).toStringAsFixed(1)}%${_downloadEta != null ? " (ETA: $_downloadEta)" : ""}'),
-                    const SizedBox(height: 20),
-                    const Text('Stemming Audio...'),
-                    LinearProgressIndicator(value: _stemmingProgress),
-                    Text('${(_stemmingProgress * 100).toStringAsFixed(1)}%${_stemmingEta != null ? " (ETA: $_stemmingEta)" : ""}'),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ] else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _processUrl,
-                      child: const Text('Process YouTube'),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: _loadLocalStems,
-                      child: const Text('Load Local Stems'),
-                    ),
-                  ],
-                ),
+
               if (_stemsDirectory != null) ...[
-                const SizedBox(height: 40),
-                const Divider(),
-                const Text('Player', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                StemPlayer(
-                  stemsDirectory: _stemsDirectory!,
-                  videoTitle: _videoTitle ?? 'stems',
-                  stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
-                  stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
+                const SizedBox(height: 24),
+                Text('Active Project', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: StemPlayer(
+                      stemsDirectory: _stemsDirectory!,
+                      videoTitle: _videoTitle ?? 'stems',
+                      stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
+                      stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -587,4 +725,70 @@ void _splitAudioIsolate(Map<String, dynamic> params) {
     onProgress: (p) => sendPort.send(p),
   );
   sendPort.send(error);
+}
+
+class LogOverlay extends StatelessWidget {
+  const LogOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF0F1015),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.all(20),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('system.log', style: TextStyle(fontFamily: 'monospace', color: Colors.grey, fontSize: 12)),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: LogService().allLogs));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logs copied')));
+                      },
+                      icon: const Icon(Icons.content_copy, size: 14),
+                      label: const Text('Copy'),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Divider(color: Colors.white10),
+            Expanded(
+              child: ValueListenableBuilder<List<String>>(
+                valueListenable: LogService().logs,
+                builder: (context, logs, _) {
+                  return ListView.builder(
+                    itemCount: logs.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == logs.length) return const Text('_', style: TextStyle(color: Colors.greenAccent));
+                      return Text(
+                        logs[index],
+                        style: const TextStyle(fontFamily: 'monospace', color: Colors.greenAccent, fontSize: 11),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+extension on ValueNotifier<List<String>> {
+  get value_listenable => this;
 }
