@@ -2,7 +2,8 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_double};
 use std::path::Path;
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, BufRead, BufReader};
+use std::process::{Command, Stdio};
 use ort::session::Session;
 use ort::value::Value;
 use ndarray::Array3;
@@ -80,7 +81,7 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
         
         println!("Rust: GetMetadata for URL: {}", url_str);
 
-        let output = std::process::Command::new(get_ytdlp_path())
+        let output = Command::new(get_ytdlp_path())
             .arg("--print")
             .arg("title")
             .arg("--print")
@@ -196,7 +197,7 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         
         println!("Rust: Starting download via yt-dlp for {}", url_str);
 
-        let status = std::process::Command::new(get_ytdlp_path())
+        let mut child = Command::new(get_ytdlp_path())
             .arg("-f")
             .arg("ba/best")
             .arg("--extractor-args")
@@ -205,8 +206,36 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
             .arg("-o")
             .arg(&download_path)
             .arg(&url_str)
-            .status()
+            .arg("--newline")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
             .map_err(|e| format!("Failed to execute yt-dlp: {}", e))?;
+
+        if let Some(stdout) = child.stdout.take() {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines() {
+                if let Ok(l) = line {
+                    // Try to parse progress: "[download]  10.0% of ..."
+                    if l.contains("[download]") && l.contains('%') {
+                        let parts: Vec<&str> = l.split_whitespace().collect();
+                        for p in parts {
+                            if p.contains('%') {
+                                if let Ok(val) = p.replace('%', "").parse::<f64>() {
+                                    if let Some(callback) = cb {
+                                        // Map 0-100% download to 0.0-0.8 range (leaving 0.2 for conversion)
+                                        callback(val / 100.0 * 0.8);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let status = child.wait().map_err(|e| format!("yt-dlp wait failed: {}", e))?;
 
         if !status.success() {
             return Err(format!("yt-dlp failed with exit code: {:?}", status.code()));
@@ -227,7 +256,7 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         };
 
         if let Some(callback) = cb {
-            callback(0.5);
+            callback(0.85);
         }
 
         println!("Rust: Download complete, converting to WAV...");
@@ -308,17 +337,11 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                         return Err(format!("dlopen failed: {}", err));
                     }
                     println!("Rust: Manual dlopen success. Keeping handle open.");
-                    // We intentionally do NOT dlclose(handle) to see if it helps 'ort' find the symbols
                 }
 
-                println!("Rust: Calling ort::init_from(&lp)...");
-                let builder = unsafe {
-                    ort::init_from(&lp).map_err(|e| e.to_string())?
-                };
-                
-                println!("Rust: EnvironmentBuilder created. Calling .commit()...");
-                let initialized = builder.commit();
-                println!("Rust: .commit() returned: {}", initialized);
+                println!("Rust: Calling ort::init_from(&lp).commit()...");
+                let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
+                println!("Rust: ort::init_from().commit() returned: {}", initialized);
             } else {
                 println!("Rust: Initializing ORT with default strategy...");
                 let _ = ort::init().commit();
