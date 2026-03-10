@@ -16,6 +16,6 @@
 - [x] Task: Redesign the `HistoryScreen` to use the card-based list format with project thumbnails and metadata.
 
 ## Phase 4: Validation
-- [ ] Task: Verify that all FFI operations (Download, Stemming, Export) work seamlessly with the new UI.
-- [ ] Task: Ensure responsive behavior across window resizes (especially for the vertical mixer lanes).
-- [ ] Task: Final polish of animations and transitions.
+- [x] Task: Verify that all FFI operations (Download, Stemming, Export) work seamlessly with the new UI.
+- [x] Task: Ensure responsive behavior across window resizes (especially for the vertical mixer lanes).
+- [x] Task: Final polish of animations and transitions.
