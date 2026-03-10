@@ -269,20 +269,29 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
             return Err(format!("Model file not found: {}", model_path_str));
         }
 
-        let mut init_guard = ORT_INITIALIZED.lock().unwrap();
-        if !*init_guard {
+        let mut init_needed = false;
+        {
+            let init_guard = ORT_INITIALIZED.lock().unwrap();
+            if !*init_guard {
+                init_needed = true;
+            }
+        }
+
+        if init_needed {
             if let Some(lp) = lib_path_str {
                 println!("Rust: Initializing ORT from {}", lp);
                 if !Path::new(&lp).exists() {
                     return Err(format!("ORT library not found: {}", lp));
                 }
+                println!("Rust: Calling ort::init_from().commit()...");
                 unsafe {
-                    ort::init_from(&lp).map_err(|e| e.to_string())?;
+                    let _ = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
                 }
             } else {
-                println!("Rust: Initializing ORT with default strategy");
-                let _ = ort::init();
+                println!("Rust: Initializing ORT with default strategy...");
+                let _ = ort::init().commit();
             }
+            let mut init_guard = ORT_INITIALIZED.lock().unwrap();
             *init_guard = true;
             println!("Rust: ORT initialized successfully");
         } else {
