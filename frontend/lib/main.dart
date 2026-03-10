@@ -23,7 +23,7 @@ void main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
-      size: Size(1000, 950),
+      size: Size(1000, 1000),
       center: true,
       title: 'YouTube Stemmer',
     );
