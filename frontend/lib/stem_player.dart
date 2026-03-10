@@ -134,6 +134,13 @@ class _StemPlayerState extends State<StemPlayer> {
     setState(() => _position = position);
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
   void _setVolume(String stem, double volume) {
     _players[stem]?.setVolume(volume);
     setState(() {});
@@ -288,7 +295,7 @@ class _StemPlayerState extends State<StemPlayer> {
                 Row(
                   children: [
                     Text(
-                      _position.toString().split('.').first.padLeft(8, '0').substring(2),
+                      _formatDuration(_position),
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
                     Expanded(
@@ -309,7 +316,7 @@ class _StemPlayerState extends State<StemPlayer> {
                       ),
                     ),
                     Text(
-                      _duration.toString().split('.').first.padLeft(8, '0').substring(2),
+                      _formatDuration(_duration),
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
                   ],
