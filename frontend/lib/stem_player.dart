@@ -292,11 +292,20 @@ class _StemPlayerState extends State<StemPlayer> {
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
                     Expanded(
-                      child: Slider(
-                        value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble()),
-                        min: 0,
-                        max: _duration.inMilliseconds.toDouble() == 0 ? 1 : _duration.inMilliseconds.toDouble(),
-                        onChanged: (v) => _seek(Duration(milliseconds: v.toInt())),
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 6,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                          activeTrackColor: Theme.of(context).colorScheme.primary,
+                          inactiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        ),
+                        child: Slider(
+                          value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble()),
+                          min: 0,
+                          max: _duration.inMilliseconds.toDouble() == 0 ? 1 : _duration.inMilliseconds.toDouble(),
+                          onChanged: (v) => _seek(Duration(milliseconds: v.toInt())),
+                        ),
                       ),
                     ),
                     Text(
@@ -384,9 +393,17 @@ class _StemPlayerState extends State<StemPlayer> {
                             height: 120,
                             child: RotatedBox(
                               quarterTurns: 3,
-                              child: Slider(
-                                value: volume,
-                                onChanged: hasFile ? (v) => _setVolume(stem, v) : null,
+                              child: SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  trackHeight: 10,
+                                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                                  inactiveTrackColor: Theme.of(context).colorScheme.surface,
+                                ),
+                                child: Slider(
+                                  value: volume,
+                                  onChanged: hasFile ? (v) => _setVolume(stem, v) : null,
+                                ),
                               ),
                             ),
                           ),

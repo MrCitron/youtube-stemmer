@@ -48,6 +48,7 @@ dependencies:
   path: ^1.9.1
   sqflite_common_ffi: ^2.4.0+2
   sqlite3_flutter_libs: ^0.6.0+eol
+  window_manager: ^0.5.1
 
 dev_dependencies:
   flutter_test:

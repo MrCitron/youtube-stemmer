@@ -14,11 +14,24 @@ import 'package:flutter/services.dart';
 import 'dart:isolate';
 import 'package:file_picker/file_picker.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    const windowOptions = WindowOptions(
+      size: Size(1000, 850),
+      center: true,
+      title: 'YouTube Stemmer',
+    );
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
