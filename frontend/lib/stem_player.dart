@@ -27,6 +27,8 @@ class StemPlayer extends StatefulWidget {
 
 class _StemPlayerState extends State<StemPlayer> {
   final Map<String, AudioPlayer> _players = {};
+  final Map<String, double> _userVolumes = {};
+  final Set<String> _soloedStems = {};
   bool _isPlaying = false;
   bool _isExporting = false;
   String? _exportStatus;
@@ -54,6 +56,8 @@ class _StemPlayerState extends State<StemPlayer> {
       await player.dispose();
     }
     _players.clear();
+    _userVolumes.clear();
+    _soloedStems.clear();
 
     for (final stem in widget.stemNames) {
       final fileName = widget.stemFiles[stem] ?? '$stem.wav';
@@ -62,6 +66,7 @@ class _StemPlayerState extends State<StemPlayer> {
       if (await file.exists()) {
         await player.setFilePath(file.path);
         _players[stem] = player;
+        _userVolumes[stem] = 1.0;
       }
     }
 
@@ -142,8 +147,38 @@ class _StemPlayerState extends State<StemPlayer> {
   }
 
   void _setVolume(String stem, double volume) {
-    _players[stem]?.setVolume(volume);
+    _userVolumes[stem] = volume;
+    _updateEffectiveVolumes();
     setState(() {});
+  }
+
+  void _toggleSolo(String stem) {
+    setState(() {
+      if (_soloedStems.contains(stem)) {
+        _soloedStems.remove(stem);
+      } else {
+        _soloedStems.add(stem);
+      }
+      _updateEffectiveVolumes();
+    });
+  }
+
+  void _updateEffectiveVolumes() {
+    final hasSolo = _soloedStems.isNotEmpty;
+    for (final stem in widget.stemNames) {
+      final player = _players[stem];
+      if (player == null) continue;
+
+      if (hasSolo) {
+        if (_soloedStems.contains(stem)) {
+          player.setVolume(_userVolumes[stem] ?? 1.0);
+        } else {
+          player.setVolume(0.0);
+        }
+      } else {
+        player.setVolume(_userVolumes[stem] ?? 1.0);
+      }
+    }
   }
 
   Future<void> _handleExportZip(ExportFormat format) async {
@@ -397,32 +432,51 @@ class _StemPlayerState extends State<StemPlayer> {
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
-                            height: 120,
+                            height: 160,
                             child: RotatedBox(
                               quarterTurns: 3,
                               child: SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
                                   trackHeight: 10,
                                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                                  activeTrackColor: _soloedStems.isNotEmpty && !_soloedStems.contains(stem)
+                                      ? Colors.grey.withOpacity(0.3)
+                                      : Theme.of(context).colorScheme.primary,
                                   inactiveTrackColor: Theme.of(context).colorScheme.surface,
                                 ),
                                 child: Slider(
-                                  value: volume,
+                                  value: _userVolumes[stem] ?? 1.0,
                                   onChanged: hasFile ? (v) => _setVolume(stem, v) : null,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Mute/Solo logic simplified
-                          IconButton(
-                            icon: Icon(volume == 0 ? Icons.volume_off : Icons.volume_up, size: 18),
-                            onPressed: hasFile ? () => _setVolume(stem, volume == 0 ? 1.0 : 0.0) : null,
-                            style: IconButton.styleFrom(
-                              backgroundColor: volume == 0 ? Colors.red.withOpacity(0.1) : null,
-                              foregroundColor: volume == 0 ? Colors.red : null,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: const Text('M', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                onPressed: hasFile ? () => _setVolume(stem, (_userVolumes[stem] ?? 1.0) == 0 ? 1.0 : 0.0) : null,
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size(28, 28),
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: (_userVolumes[stem] ?? 1.0) == 0 ? Colors.red.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
+                                  foregroundColor: (_userVolumes[stem] ?? 1.0) == 0 ? Colors.red : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                icon: const Text('S', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                onPressed: hasFile ? () => _toggleSolo(stem) : null,
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size(28, 28),
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: _soloedStems.contains(stem) ? Colors.amber.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
+                                  foregroundColor: _soloedStems.contains(stem) ? Colors.amber : Colors.grey,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

@@ -136,11 +136,44 @@ class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
-
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _urlController = TextEditingController();
   final FocusNode _urlFocusNode = FocusNode();
   bool _isProcessing = false;
+  Isolate? _downloadIsolate;
+  Isolate? _stemmingIsolate;
+  String? _currentDownloadPath;
+  String? _currentOutputDir;
+
+  void _cancelProcessing() async {
+    LogService().info('Cancellation requested by user.');
+    _downloadIsolate?.kill(priority: Isolate.immediate);
+    _stemmingIsolate?.kill(priority: Isolate.immediate);
+    _downloadIsolate = null;
+    _stemmingIsolate = null;
+
+    // Cleanup files
+    if (_currentDownloadPath != null) {
+      final f = File(_currentDownloadPath!);
+      if (await f.exists()) {
+        await f.delete();
+        LogService().debug('Cleaned up partial download: ${_currentDownloadPath}');
+      }
+    }
+    if (_currentOutputDir != null) {
+      final d = Directory(_currentOutputDir!);
+      if (await d.exists()) {
+        await d.delete(recursive: true);
+        LogService().debug('Cleaned up partial stems directory: ${_currentOutputDir}');
+      }
+    }
+
+    setState(() {
+      _isProcessing = false;
+      _errorMessage = 'Process cancelled by user.';
+    });
+  }
+
   String? _errorMessage;
   String? _stemsDirectory;
   String? _videoTitle;
@@ -278,6 +311,7 @@ class _MyHomePageState extends State<MyHomePage> {
       LogService().info('Download started for: $title');
       final tempDir = await getTemporaryDirectory();
       final downloadPath = p.join(tempDir.path, 'original_audio.mp4');
+      _currentDownloadPath = downloadPath;
       
       // Ensure temp directory exists
       if (!await tempDir.exists()) {
@@ -292,6 +326,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'path': downloadPath,
         'sendPort': receivePort.sendPort,
       });
+      _downloadIsolate = isolate;
 
       await for (final message in receivePort) {
         if (message is double) {
@@ -312,6 +347,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final appSupportDir = await getApplicationSupportDirectory();
       final sanitizedTitle = title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
       final outputDir = p.join(appSupportDir.path, 'stems', sanitizedTitle);
+      _currentOutputDir = outputDir;
       Directory(outputDir).createSync(recursive: true);
 
       final downloader = ModelDownloader();
@@ -326,6 +362,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'stemNames': _selectedModel.stemNames,
         'sendPort': stemmingReceivePort.sendPort,
       });
+      _stemmingIsolate = stemmingIsolate;
 
       await for (final message in stemmingReceivePort) {
         if (message is double) {
@@ -649,8 +686,19 @@ class _MyHomePageState extends State<MyHomePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_downloadProgress < 1.0 ? 'Downloading Audio...' : 'Stemming Audio...', 
-                              style: const TextStyle(fontWeight: FontWeight.w500)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(_downloadProgress < 1.0 ? 'Downloading Audio...' : 'Stemming Audio...', 
+                                  style: const TextStyle(fontWeight: FontWeight.w500)),
+                                TextButton.icon(
+                                  onPressed: _cancelProcessing,
+                                  icon: const Icon(Icons.cancel_outlined, size: 16),
+                                  label: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 8),
                             if (_downloadProgress < 1.0) ...[
                               LinearProgressIndicator(value: _downloadProgress, borderRadius: BorderRadius.circular(8)),

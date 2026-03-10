@@ -1,14 +1,12 @@
-# Project Tracks
+# Tracks Registry
 
-This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
+This file tracks the high-level progress of the project.
 
----
-
-- [x] **Track: Full backend refactoring**
-*Link: [./tracks/full_backend_refactor_go_20260307/](./tracks/full_backend_refactor_go_20260307/)*
+- [x] **Track: Full backend refactoring (Go)**
+*Link: [./archive/full_backend_refactor_go_20260307/](./archive/full_backend_refactor_go_20260307/)*
 
 - [x] **Track: Enhanced UX Controls**
-*Link: [./tracks/enhanced_ux_controls_20260308/](./tracks/enhanced_ux_controls_20260308/)*
+*Link: [./archive/enhanced_ux_controls_20260308/](./archive/enhanced_ux_controls_20260308/)*
 
 - [x] **Track: Advanced Models Selection**
 *Link: [./archive/advanced_models_20260308/](./archive/advanced_models_20260308/)*
@@ -25,10 +23,10 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: UI Visual Revamp**
 *Link: [./archive/ui_visual_revamp_20260308/](./archive/ui_visual_revamp_20260308/)*
 
-- [ ] **Track: Branding & Identity Migration** (IN PROGRESS)
-*Link: [./tracks/branding_migration_20260310/](./tracks/branding_migration_20260310/)*
+- [x] **Track: Branding & Identity Migration**
+*Link: [./archive/branding_migration_20260310/](./archive/branding_migration_20260310/)*
 
-- [ ] **Track: Pro Mixer & Control Flow**
+- [ ] **Track: Pro Mixer & Control Flow** (IN PROGRESS)
 *Link: [./tracks/pro_mixer_and_cancellation_20260310/](./tracks/pro_mixer_and_cancellation_20260310/)*
 
 - [ ] **Track: Smart Metronome System**
