@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 libc = "0.2"
-ort = { version = "2.0.0-rc.9", features = ["load-dynamic"] }
+ort = { version = "=2.0.0-rc.12", features = ["load-dynamic"] }
 symphonia = { version = "0.5", features = ["all-formats", "all-codecs"] }
 hound = "3.5" # WAV writing
 zip = "2.2"

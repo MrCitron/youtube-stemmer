@@ -284,27 +284,9 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                     return Err(format!("ORT library not found: {}", lp));
                 }
                 
-                // Manual dlopen check to see if it hangs there
-                println!("Rust: Manual dlopen check starting...");
-                #[cfg(unix)]
-                {
-                    let lp_c = CString::new(lp.clone()).unwrap();
-                    let handle = unsafe { libc::dlopen(lp_c.as_ptr(), libc::RTLD_NOW) };
-                    if handle.is_null() {
-                        let err = unsafe { CStr::from_ptr(libc::dlerror()) }.to_string_lossy();
-                        println!("Rust: Manual dlopen failed: {}", err);
-                        return Err(format!("dlopen failed: {}", err));
-                    }
-                    println!("Rust: Manual dlopen success, closing handle...");
-                    unsafe { libc::dlclose(handle) };
-                }
-
-                println!("Rust: Calling ort::init_from(&lp)...");
-                let builder = ort::init_from(&lp).map_err(|e| e.to_string())?;
-                
-                println!("Rust: Calling builder.commit()...");
-                builder.commit();
-                println!("Rust: builder.commit() returned");
+                println!("Rust: Calling ort::init_from(&lp).commit()...");
+                let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
+                println!("Rust: ort::init_from().commit() result: {}", initialized);
             } else {
                 println!("Rust: Initializing ORT with default strategy...");
                 let _ = ort::init().commit();
@@ -506,7 +488,8 @@ pub extern "C" fn CreateZip(paths: *const c_char, output_path: *const c_char) ->
             let mut f = File::open(path).map_err(|e| e.to_string())?;
             let mut buffer = Vec::new();
             f.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
-            std::io::Write::write_all(&mut zip, &buffer).map_err(|e| e.to_string())?;
+            use std::io::Write;
+            zip.write_all(&buffer).map_err(|e| e.to_string())?;
         }
 
         zip.finish().map_err(|e| e.to_string())?;
