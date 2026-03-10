@@ -8,6 +8,8 @@ use ort::value::Value;
 use ndarray::Array3;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 use symphonia::core::audio::Signal;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
@@ -265,6 +267,14 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
         
         println!("Rust: InitStemmer entered. Model: {}", model_path_str);
 
+        // Start a heartbeat thread to show we aren't totally locked up
+        thread::spawn(|| {
+            for i in 1..20 {
+                thread::sleep(Duration::from_secs(5));
+                println!("Rust: Heartbeat {} - Still alive during initialization...", i * 5);
+            }
+        });
+
         if !Path::new(&model_path_str).exists() {
             return Err(format!("Model file not found: {}", model_path_str));
         }
@@ -278,15 +288,37 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
         }
 
         if init_needed {
+            println!("Rust: Setting ORT environment variables...");
+            std::env::set_var("ORT_DISABLE_TELEMETRY", "1");
+
             if let Some(lp) = lib_path_str {
-                println!("Rust: Initializing ORT from {}", lp);
+                println!("Rust: Target dynamic library: {}", lp);
                 if !Path::new(&lp).exists() {
-                    return Err(format!("ORT library not found: {}", lp));
+                    return Err(format!("ORT library not found at: {}", lp));
                 }
                 
-                println!("Rust: Calling ort::init_from(&lp).commit()...");
-                let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
-                println!("Rust: ort::init_from().commit() result: {}", initialized);
+                #[cfg(unix)]
+                {
+                    println!("Rust: Manual dlopen check (RTLD_NOW | RTLD_GLOBAL)...");
+                    let lp_c = CString::new(lp.clone()).unwrap();
+                    let handle = unsafe { libc::dlopen(lp_c.as_ptr(), libc::RTLD_NOW | libc::RTLD_GLOBAL) };
+                    if handle.is_null() {
+                        let err = unsafe { CStr::from_ptr(libc::dlerror()) }.to_string_lossy();
+                        println!("Rust: Manual dlopen failed: {}", err);
+                        return Err(format!("dlopen failed: {}", err));
+                    }
+                    println!("Rust: Manual dlopen success. Keeping handle open.");
+                    // We intentionally do NOT dlclose(handle) to see if it helps 'ort' find the symbols
+                }
+
+                println!("Rust: Calling ort::init_from(&lp)...");
+                let builder = unsafe {
+                    ort::init_from(&lp).map_err(|e| e.to_string())?
+                };
+                
+                println!("Rust: EnvironmentBuilder created. Calling .commit()...");
+                let initialized = builder.commit();
+                println!("Rust: .commit() returned: {}", initialized);
             } else {
                 println!("Rust: Initializing ORT with default strategy...");
                 let _ = ort::init().commit();
