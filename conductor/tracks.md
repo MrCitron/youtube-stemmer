@@ -19,14 +19,23 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Persistent History**
 *Link: [./archive/persistent_history_20260308/](./archive/persistent_history_20260308/)*
 
-- [ ] **Track: Rust Backend Migration**
+- [ ] **Track: Rust Backend Migration (PAUSED)**
 *Link: [./tracks/rust_backend_migration_20260308/](./tracks/rust_backend_migration_20260308/)*
 
 - [x] **Track: UI Visual Revamp**
 *Link: [./archive/ui_visual_revamp_20260308/](./archive/ui_visual_revamp_20260308/)*
 
-- [ ] **Track: Audio Loopback Recording**
-*Link: [./tracks/audio_loopback_recording_20260308/](./tracks/audio_loopback_recording_20260308/)*
+- [ ] **Track: Branding & Identity Migration** (IN PROGRESS)
+*Link: [./tracks/branding_migration_20260310/](./tracks/branding_migration_20260310/)*
+
+- [ ] **Track: Pro Mixer & Control Flow**
+*Link: [./tracks/pro_mixer_and_cancellation_20260310/](./tracks/pro_mixer_and_cancellation_20260310/)*
+
+- [ ] **Track: Smart Metronome System**
+*Link: [./tracks/smart_metronome_system_20260310/](./tracks/smart_metronome_system_20260310/)*
+
+- [ ] **Track: Audio Loopback Recording (CANCELLED)**
+*Link: [./archive/cancelled_audio_loopback_recording_20260308/](./archive/cancelled_audio_loopback_recording_20260308/)*
 
 - [ ] **Track: Comprehensive Documentation**
 *Link: [./tracks/comprehensive_documentation_20260308/](./tracks/comprehensive_documentation_20260308/)*

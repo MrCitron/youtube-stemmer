@@ -1,4 +1,4 @@
-package com.metin.youtube_stemmer.youtube_stemmer
+package com.metinosman.youtube_stemmer.youtube_stemmer
 
 import io.flutter.embedding.android.FlutterActivity
 

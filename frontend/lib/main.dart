@@ -756,7 +756,13 @@ class LogOverlay extends StatefulWidget {
 }
 
 class _LogOverlayState extends State<LogOverlay> {
-  Set<LogLevel> _selectedLevels = {LogLevel.debug, LogLevel.info, LogLevel.error};
+  LogLevel _selectedLevel = LogLevel.debug;
+
+  bool _shouldShow(LogLevel entryLevel) {
+    if (_selectedLevel == LogLevel.error) return entryLevel == LogLevel.error;
+    if (_selectedLevel == LogLevel.info) return entryLevel == LogLevel.info || entryLevel == LogLevel.error;
+    return true; // Debug shows everything
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -798,17 +804,17 @@ class _LogOverlayState extends State<LogOverlay> {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: SegmentedButton<LogLevel>(
                 segments: const [
-                  ButtonSegment(value: LogLevel.debug, label: Text('DEBUG', style: TextStyle(fontSize: 10))),
-                  ButtonSegment(value: LogLevel.info, label: Text('INFO', style: TextStyle(fontSize: 10))),
                   ButtonSegment(value: LogLevel.error, label: Text('ERROR', style: TextStyle(fontSize: 10))),
+                  ButtonSegment(value: LogLevel.info, label: Text('INFO', style: TextStyle(fontSize: 10))),
+                  ButtonSegment(value: LogLevel.debug, label: Text('DEBUG', style: TextStyle(fontSize: 10))),
                 ],
-                selected: _selectedLevels,
+                selected: {_selectedLevel},
                 onSelectionChanged: (newSelection) {
                   setState(() {
-                    _selectedLevels = newSelection;
+                    _selectedLevel = newSelection.first;
                   });
                 },
-                multiSelectionEnabled: true,
+                multiSelectionEnabled: false,
                 emptySelectionAllowed: false,
                 showSelectedIcon: false,
                 style: SegmentedButton.styleFrom(
@@ -820,7 +826,7 @@ class _LogOverlayState extends State<LogOverlay> {
               child: ValueListenableBuilder<List<LogEntry>>(
                 valueListenable: LogService().entries,
                 builder: (context, entries, _) {
-                  final filteredEntries = entries.where((e) => _selectedLevels.contains(e.level)).toList();
+                  final filteredEntries = entries.where((e) => _shouldShow(e.level)).toList();
                   return ListView.builder(
                     itemCount: filteredEntries.length + 1,
                     itemBuilder: (context, index) {

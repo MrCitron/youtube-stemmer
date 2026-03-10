@@ -6,22 +6,23 @@ plugins {
 }
 
 android {
-    namespace = "com.metin.youtube_stemmer.youtube_stemmer"
+    namespace = "com.metinosman.youtube_stemmer.youtube_stemmer"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.metin.youtube_stemmer.youtube_stemmer"
+        applicationId = "com.metinosman.youtube_stemmer.youtube_stemmer"
+
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
