@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum LogLevel { debug, info, error }
+enum LogLevel { debug, info, warn, error }
 
 class LogEntry {
   final DateTime timestamp;
@@ -31,6 +31,7 @@ class LogService {
 
   void debug(String message) => add(message, level: LogLevel.debug);
   void info(String message) => add(message, level: LogLevel.info);
+  void warn(String message) => add(message, level: LogLevel.warn);
   void error(String message) => add(message, level: LogLevel.error);
 
   void clear() {

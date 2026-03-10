@@ -30,6 +30,21 @@ void main() {
     }
   });
 
+  test('FFI GetEstimatedBPM call', () {
+    final projectRoot = p.dirname(Directory.current.path);
+    final inputPath = p.join(projectRoot, 'backend_go_legacy', 'test_input.wav');
+    try {
+      final bpmStr = backend.getEstimatedBPM(inputPath);
+      print('Estimated BPM: $bpmStr');
+      expect(bpmStr, isNot(contains('Error')));
+      final bpm = double.parse(bpmStr);
+      expect(bpm, greaterThan(40));
+      expect(bpm, lessThan(250));
+    } catch (e) {
+      fail('FFI GetEstimatedBPM failed: $e');
+    }
+  });
+
   test('FFI DownloadAudio call', () {
     const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
     final tmpDir = Directory.systemTemp.createTempSync('yt_stem_test');
@@ -65,7 +80,7 @@ void main() {
       print('InitStemmer succeeded (unexpected without model file)');
     }
 
-    final splitError = backend.splitAudio("input.mp4", "output/");
+    final splitError = backend.splitAudio("input.mp4", "output/", ['vocals', 'drums', 'bass', 'other']);
     if (splitError != null) {
       print('SplitAudio failed as expected: $splitError');
     } else {
@@ -88,7 +103,7 @@ void main() {
       }
 
       print('Starting Full Stemming for: $inputPath');
-      final splitError = backend.splitAudio(inputPath, outputDir);
+      final splitError = backend.splitAudio(inputPath, outputDir, ['vocals', 'drums', 'bass', 'other']);
       if (splitError != null) {
         fail('FFI SplitAudio failed: $splitError');
       }

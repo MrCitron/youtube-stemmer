@@ -4,8 +4,12 @@ import 'package:youtube_stemmer/main.dart';
 
 void main() {
   testWidgets('Should show initial UI', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: MyHomePage(title: 'YouTube Stemmer'),
+    await tester.pumpWidget(MaterialApp(
+      home: MyHomePage(
+        title: 'YouTube Stemmer',
+        onToggleTheme: () {},
+        themeMode: ThemeMode.dark,
+      ),
     ));
 
     expect(find.byType(TextField), findsOneWidget);

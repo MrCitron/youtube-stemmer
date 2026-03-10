@@ -23,7 +23,7 @@ void main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
-      size: Size(1000, 1000),
+      size: Size(600, 1100),
       center: true,
       title: 'YouTube Stemmer',
     );
@@ -204,6 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _videoTitle;
   List<String>? _stemNames;
   Map<String, String>? _stemFiles;
+  double? _bpm;
 
   double _downloadProgress = 0;
   double _stemmingProgress = 0;
@@ -412,20 +413,52 @@ class _MyHomePageState extends State<MyHomePage> {
                   const SnackBar(content: Text('Stemming skipped: AI model not initialized.')),
                 );
               }
+
+              // 4. BPM Analysis (even if stemming is skipped)
+              LogService().info('Starting BPM analysis (stemming skipped)...');
+              double? estimatedBpm;
+              try {
+                final bpmStr = BackendFFI().getEstimatedBPM(downloadPath);
+                if (!bpmStr.contains('Error')) {
+                  estimatedBpm = double.tryParse(bpmStr);
+                  LogService().info('Estimated BPM: $estimatedBpm');
+                }
+              } catch (e) {
+                LogService().warn('BPM analysis error: $e');
+              }
+
               setState(() {
                 _stemsDirectory = outputDir;
                 _stemNames = _selectedModel.stemNames;
                 _stemFiles = { for (var s in _selectedModel.stemNames) s : "$s.wav" };
+                _bpm = estimatedBpm;
               });
             } else {
               throw Exception('Stemming failed: $message');
             }
           } else {
             final stemFiles = { for (var s in _selectedModel.stemNames) s : "$s.wav" };
+            
+            // 4. BPM Analysis
+            LogService().info('Starting BPM analysis...');
+            double? estimatedBpm;
+            try {
+              final bpmStr = BackendFFI().getEstimatedBPM(downloadPath);
+              if (!bpmStr.contains('Error')) {
+                estimatedBpm = double.tryParse(bpmStr);
+                LogService().info('Estimated BPM: $estimatedBpm');
+              } else {
+                LogService().warn('BPM analysis failed: $bpmStr');
+              }
+            } catch (e) {
+              LogService().warn('BPM analysis error: $e');
+            }
+
             setState(() {
               _stemsDirectory = outputDir;
               _stemNames = _selectedModel.stemNames;
               _stemFiles = stemFiles;
+              _bpm = estimatedBpm;
               _stemmingProgress = 1.0;
             });
             LogService().info('Stemming complete. Saved to: $outputDir');
@@ -437,6 +470,7 @@ class _MyHomePageState extends State<MyHomePage> {
               directory: outputDir,
               stemNames: _selectedModel.stemNames,
               stemFiles: stemFiles,
+              bpm: estimatedBpm,
               createdAt: DateTime.now(),
             ));
 
@@ -553,6 +587,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _videoTitle = item.title;
       _stemNames = item.stemNames;
       _stemFiles = item.stemFiles;
+      _bpm = item.bpm;
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -765,6 +800,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       videoTitle: _videoTitle ?? 'stems',
                       stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
                       stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
+                      initialBpm: _bpm,
                     ),
                   ),
                 ),

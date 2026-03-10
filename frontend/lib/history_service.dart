@@ -10,6 +10,7 @@ class HistoryItem {
   final String directory;
   final List<String> stemNames;
   final Map<String, String> stemFiles;
+  final double? bpm;
   final DateTime createdAt;
 
   HistoryItem({
@@ -19,6 +20,7 @@ class HistoryItem {
     required this.directory,
     required this.stemNames,
     required this.stemFiles,
+    this.bpm,
     required this.createdAt,
   });
 
@@ -30,6 +32,7 @@ class HistoryItem {
       'directory': directory,
       'stemNames': jsonEncode(stemNames),
       'stemFiles': jsonEncode(stemFiles),
+      'bpm': bpm,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -42,6 +45,7 @@ class HistoryItem {
       directory: map['directory'],
       stemNames: List<String>.from(jsonDecode(map['stemNames'])),
       stemFiles: Map<String, String>.from(jsonDecode(map['stemFiles'])),
+      bpm: map['bpm']?.toDouble(),
       createdAt: DateTime.parse(map['createdAt']),
     );
   }
@@ -63,7 +67,7 @@ class HistoryService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $tableName (
@@ -73,9 +77,15 @@ class HistoryService {
             directory TEXT,
             stemNames TEXT,
             stemFiles TEXT,
+            bpm REAL,
             createdAt TEXT
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE $tableName ADD COLUMN bpm REAL');
+        }
       },
     );
   }

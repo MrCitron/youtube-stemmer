@@ -18,6 +18,9 @@ use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
+mod tempo;
+mod click_gen;
+
 static ABORT: AtomicBool = AtomicBool::new(false);
 
 #[no_mangle]
@@ -118,6 +121,28 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     let final_res = match result {
         Ok(s) => s,
         Err(_) => "Error: Panic in GetMetadata".to_string(),
+    };
+    CString::new(final_res).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn GetEstimatedBPM(path: *const c_char) -> *mut c_char {
+    let result = std::panic::catch_unwind(|| {
+        if path.is_null() {
+            return "Error: Null path".to_string();
+        }
+        let path_raw = unsafe { CStr::from_ptr(path) }.to_string_lossy();
+        let path_obj = Path::new(&*path_raw);
+        
+        match tempo::estimate_bpm(path_obj) {
+            Ok(bpm) => format!("{:.2}", bpm),
+            Err(e) => format!("Error: {}", e),
+        }
+    });
+
+    let final_res = match result {
+        Ok(s) => s,
+        Err(_) => "Error: Panic in GetEstimatedBPM".to_string(),
     };
     CString::new(final_res).unwrap().into_raw()
 }

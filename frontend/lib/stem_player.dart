@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'dart:io';
 import 'export_ui.dart';
 import 'export_service.dart';
+import 'metronome_service.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -12,6 +13,7 @@ class StemPlayer extends StatefulWidget {
   final String videoTitle;
   final List<String> stemNames;
   final Map<String, String> stemFiles;
+  final double? initialBpm;
 
   const StemPlayer({
     super.key,
@@ -19,6 +21,7 @@ class StemPlayer extends StatefulWidget {
     required this.videoTitle,
     required this.stemNames,
     required this.stemFiles,
+    this.initialBpm,
   });
 
   @override
@@ -34,11 +37,23 @@ class _StemPlayerState extends State<StemPlayer> {
   String? _exportStatus;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  late double _bpm;
+  bool _metronomeEnabled = false;
+  bool _countInEnabled = false;
+  final _metronomeService = MetronomeService();
+  final _clickPlayer = AudioPlayer(); // Dedicated player for click
 
   @override
   void initState() {
     super.initState();
+    _bpm = widget.initialBpm ?? 120.0;
     _initPlayers();
+    _initMetronome();
+  }
+
+  Future<void> _initMetronome() async {
+    await _metronomeService.init();
+    _metronomeService.bpm = _bpm;
   }
 
   @override
@@ -47,6 +62,11 @@ class _StemPlayerState extends State<StemPlayer> {
     if (oldWidget.stemsDirectory != widget.stemsDirectory) {
       _isPlaying = false;
       _initPlayers();
+    }
+    if (oldWidget.initialBpm != widget.initialBpm) {
+      _bpm = widget.initialBpm ?? 120.0;
+      _metronomeService.bpm = _bpm;
+      if (mounted) setState(() {});
     }
   }
 
@@ -88,15 +108,24 @@ class _StemPlayerState extends State<StemPlayer> {
       for (final player in _players.values) {
         await player.pause();
       }
+      _metronomeService.stop();
     } else {
+      if (_countInEnabled) {
+        await _metronomeService.playCountIn();
+      }
+
       // Ensure all players are at the same position before playing
       final targetPos = _players.values.first.position;
       for (final player in _players.values) {
         await player.seek(targetPos);
         player.play();
       }
+
+      if (_metronomeEnabled) {
+        _metronomeService.start();
+      }
     }
-    setState(() => _isPlaying = !_isPlaying);
+    if (mounted) setState(() => _isPlaying = !_isPlaying);
   }
 
   void _stop() async {
@@ -293,6 +322,75 @@ class _StemPlayerState extends State<StemPlayer> {
     }
   }
 
+  void _showBpmEditor() {
+    final controller = TextEditingController(text: _bpm.toStringAsFixed(0));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Tempo (BPM)'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'BPM'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final newBpm = double.tryParse(controller.text);
+              if (newBpm != null && newBpm > 0) {
+                setState(() {
+                  _bpm = newBpm;
+                  _metronomeService.bpm = newBpm;
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlToggle({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final color = isSelected ? Theme.of(context).colorScheme.primary : Colors.grey;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(isSelected ? 0.5 : 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: color,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_players.isEmpty) {
@@ -392,6 +490,52 @@ class _StemPlayerState extends State<StemPlayer> {
           ),
         ),
 
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // BPM Display & Override
+            InkWell(
+              onTap: _showBpmEditor,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_bpm.toStringAsFixed(0)}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.amber, fontFamily: 'monospace', height: 1.0),
+                    ),
+                    const Text(
+                      'BPM',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.amber),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            // Metronome & Count-in Switches
+            _buildControlToggle(
+              icon: Icons.av_timer,
+              label: 'METRONOME',
+              isSelected: _metronomeEnabled,
+              onTap: () {
+                setState(() => _metronomeEnabled = !_metronomeEnabled);
+                if (!_metronomeEnabled) _metronomeService.stop();
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildControlToggle(
+              icon: Icons.more_time_rounded,
+              label: 'COUNT-IN',
+              isSelected: _countInEnabled,
+              onTap: () => setState(() => _countInEnabled = !_countInEnabled),
+            ),
+          ],
+        ),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerLeft,

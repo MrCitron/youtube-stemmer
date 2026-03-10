@@ -57,6 +57,9 @@ typedef CreateZip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Poin
 typedef CreateMp3ZipFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
 typedef CreateMp3Zip = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> paths, ffi.Pointer<Utf8> outputPath);
 
+typedef GetEstimatedBPMFunc = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> path);
+typedef GetEstimatedBPM = ffi.Pointer<Utf8> Function(ffi.Pointer<Utf8> path);
+
 typedef FreeStringFunc = ffi.Void Function(ffi.Pointer<Utf8> str);
 typedef FreeString = void Function(ffi.Pointer<Utf8> str);
 
@@ -79,6 +82,7 @@ class BackendFFI {
   late final FreeString _freeString;
   late final GetMetadata _checkStatus;
   late final CancelTasks _cancelTasks;
+  late final GetEstimatedBPM _getEstimatedBPM;
 
   BackendFFI._internal() {
     final libPath = _getLibraryPath();
@@ -105,6 +109,8 @@ class BackendFFI {
     _checkStatus = _lib.lookup<ffi.NativeFunction<GetMetadataFunc>>('CheckStatus').asFunction();
 
     _cancelTasks = _lib.lookup<ffi.NativeFunction<CancelTasksFunc>>('CancelTasks').asFunction();
+
+    _getEstimatedBPM = _lib.lookup<ffi.NativeFunction<GetEstimatedBPMFunc>>('GetEstimatedBPM').asFunction();
   }
 
   void helloWorld() => _helloWorld();
@@ -120,6 +126,23 @@ class BackendFFI {
       return res;
     } catch (e) {
       return "Error: $e";
+    }
+  }
+
+  String getEstimatedBPM(String path) {
+    final pathPtr = path.toNativeUtf8();
+    try {
+      final resPtr = _getEstimatedBPM(pathPtr);
+      if (resPtr == ffi.nullptr) {
+        return "Error: Backend returned a null pointer for BPM";
+      }
+      final res = resPtr.toDartString();
+      _freeString(resPtr);
+      return res;
+    } catch (e) {
+      return "Error: FFI call failed: $e";
+    } finally {
+      malloc.free(pathPtr);
     }
   }
 
@@ -274,7 +297,7 @@ class BackendFFI {
   static String _getLibraryPath() {
     final String libName = _getBackendLibraryName();
     // ignore: avoid_print
-    print('FFI: Searching for $libName...');
+    print('FFI: Searching for $libName. Current directory: ${Directory.current.path}');
 
     // 1. Check next to the executable
     final exeDir = p.dirname(Platform.resolvedExecutable);
@@ -310,6 +333,22 @@ class BackendFFI {
       // ignore: avoid_print
       print('FFI: Found $libName at $rootBackendPath');
       return rootBackendPath;
+    }
+
+    // 4b. Check in current working directory /backend/
+    final cwdBackendPath = p.join(Directory.current.path, 'backend', libName);
+    if (File(cwdBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $cwdBackendPath');
+      return cwdBackendPath;
+    }
+
+    // 4c. Check in parent directory /backend/ (common for flutter test)
+    final parentBackendPath = p.join(p.dirname(Directory.current.path), 'backend', libName);
+    if (File(parentBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $parentBackendPath');
+      return parentBackendPath;
     }
 
     // 5. Check in lib/ subdirectory
