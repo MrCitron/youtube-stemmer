@@ -1,21 +1,41 @@
 import 'package:flutter/foundation.dart';
 
+enum LogLevel { debug, info, error }
+
+class LogEntry {
+  final DateTime timestamp;
+  final String message;
+  final LogLevel level;
+
+  LogEntry(this.message, this.level) : timestamp = DateTime.now();
+
+  @override
+  String toString() {
+    final timeStr = timestamp.toString().split('.').first.split(' ').last;
+    return '[$timeStr] [${level.name.toUpperCase()}] $message';
+  }
+}
+
 class LogService {
   static final LogService _instance = LogService._internal();
   factory LogService() => _instance;
   LogService._internal();
 
-  final ValueNotifier<List<String>> logs = ValueNotifier<List<String>>([]);
+  final ValueNotifier<List<LogEntry>> entries = ValueNotifier<List<LogEntry>>([]);
 
-  void add(String message) {
-    final timestamp = DateTime.now().toString().split('.').first.split(' ').last;
-    logs.value = [...logs.value, '[$timestamp] $message'];
-    debugPrint('[$timestamp] $message');
+  void add(String message, {LogLevel level = LogLevel.info}) {
+    final entry = LogEntry(message, level);
+    entries.value = [...entries.value, entry];
+    debugPrint(entry.toString());
   }
+
+  void debug(String message) => add(message, level: LogLevel.debug);
+  void info(String message) => add(message, level: LogLevel.info);
+  void error(String message) => add(message, level: LogLevel.error);
 
   void clear() {
-    logs.value = [];
+    entries.value = [];
   }
 
-  String get allLogs => logs.value.join('\n');
+  String get allLogs => entries.value.map((e) => e.toString()).join('\n');
 }

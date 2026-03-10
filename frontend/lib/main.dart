@@ -181,12 +181,12 @@ class _MyHomePageState extends State<MyHomePage> {
     final url = _urlController.text;
     if (url.isEmpty) return;
     
-    LogService().add('Starting extraction process for: $url');
+    LogService().info('Starting extraction process for: $url');
 
     if (!await _checkModel(_selectedModel)) {
       if (mounted) {
         setState(() => _errorMessage = 'Stemming skipped: ${_selectedModel.name} not initialized.');
-        LogService().add('Error: Model not initialized');
+        LogService().error('Error: Model not initialized');
       }
       return;
     }
@@ -205,16 +205,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     try {
       // 1. Get Metadata
-      debugPrint('DEBUG: Calling GetMetadata for $url');
+      LogService().debug('Calling GetMetadata for $url');
       final backend = BackendFFI();
       
       // Basic check first
-      debugPrint('DEBUG: Calling CheckStatus...');
+      LogService().debug('Calling CheckStatus...');
       final status = backend.checkStatus();
-      debugPrint('DEBUG: CheckStatus result: $status');
+      LogService().debug('CheckStatus result: $status');
 
       final metadata = backend.getMetadata(url);
-      debugPrint('DEBUG: GetMetadata result: $metadata');
+      LogService().debug('GetMetadata result: $metadata');
       
       if (metadata.startsWith('Error:')) {
         if (mounted) {
@@ -273,6 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // 2. Download Audio
+      LogService().info('Download started for: $title');
       final tempDir = await getTemporaryDirectory();
       final downloadPath = p.join(tempDir.path, 'original_audio.mp4');
       
@@ -305,6 +306,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // 3. Split Audio (Stemming)
+      LogService().info('Download complete. Starting stemming.');
       final appSupportDir = await getApplicationSupportDirectory();
       final sanitizedTitle = title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
       final outputDir = p.join(appSupportDir.path, 'stems', sanitizedTitle);
@@ -355,6 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _stemFiles = stemFiles;
               _stemmingProgress = 1.0;
             });
+            LogService().info('Stemming complete. Saved to: $outputDir');
             
             // Save to History
             await HistoryService().insertItem(HistoryItem(
@@ -376,6 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     } catch (e) {
+      LogService().error('Process failed: $e');
       if (mounted) {
         final errorStr = e.toString();
         bool isForbidden = errorStr.contains('403') || errorStr.toLowerCase().contains('forbidden');
@@ -740,8 +744,15 @@ void _splitAudioIsolate(Map<String, dynamic> params) {
   sendPort.send(error);
 }
 
-class LogOverlay extends StatelessWidget {
+class LogOverlay extends StatefulWidget {
   const LogOverlay({super.key});
+
+  @override
+  State<LogOverlay> createState() => _LogOverlayState();
+}
+
+class _LogOverlayState extends State<LogOverlay> {
+  Set<LogLevel> _selectedLevels = {LogLevel.debug, LogLevel.info, LogLevel.error};
 
   @override
   Widget build(BuildContext context) {
@@ -751,7 +762,7 @@ class LogOverlay extends StatelessWidget {
       insetPadding: const EdgeInsets.all(20),
       child: Container(
         width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 500),
+        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 600),
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -779,17 +790,48 @@ class LogOverlay extends StatelessWidget {
               ],
             ),
             const Divider(color: Colors.white10),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: SegmentedButton<LogLevel>(
+                segments: const [
+                  ButtonSegment(value: LogLevel.debug, label: Text('DEBUG', style: TextStyle(fontSize: 10))),
+                  ButtonSegment(value: LogLevel.info, label: Text('INFO', style: TextStyle(fontSize: 10))),
+                  ButtonSegment(value: LogLevel.error, label: Text('ERROR', style: TextStyle(fontSize: 10))),
+                ],
+                selected: _selectedLevels,
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _selectedLevels = newSelection;
+                  });
+                },
+                multiSelectionEnabled: true,
+                emptySelectionAllowed: false,
+                showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
             Expanded(
-              child: ValueListenableBuilder<List<String>>(
-                valueListenable: LogService().logs,
-                builder: (context, logs, _) {
+              child: ValueListenableBuilder<List<LogEntry>>(
+                valueListenable: LogService().entries,
+                builder: (context, entries, _) {
+                  final filteredEntries = entries.where((e) => _selectedLevels.contains(e.level)).toList();
                   return ListView.builder(
-                    itemCount: logs.length + 1,
+                    itemCount: filteredEntries.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == logs.length) return const Text('_', style: TextStyle(color: Colors.greenAccent));
-                      return Text(
-                        logs[index],
-                        style: const TextStyle(fontFamily: 'monospace', color: Colors.greenAccent, fontSize: 11),
+                      if (index == filteredEntries.length) return const Text('_', style: TextStyle(color: Colors.greenAccent));
+                      final entry = filteredEntries[index];
+                      Color color = Colors.greenAccent;
+                      if (entry.level == LogLevel.error) color = Colors.redAccent;
+                      if (entry.level == LogLevel.debug) color = Colors.blueAccent;
+                      
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: Text(
+                          entry.toString(),
+                          style: TextStyle(fontFamily: 'monospace', color: color, fontSize: 11),
+                        ),
                       );
                     },
                   );
@@ -801,7 +843,4 @@ class LogOverlay extends StatelessWidget {
       ),
     );
   }
-}
-extension on ValueNotifier<List<String>> {
-  get value_listenable => this;
 }

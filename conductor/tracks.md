@@ -22,8 +22,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Rust Backend Migration**
 *Link: [./tracks/rust_backend_migration_20260308/](./tracks/rust_backend_migration_20260308/)*
 
-- [ ] **Track: UI Visual Revamp**
-*Link: [./tracks/ui_visual_revamp_20260308/](./tracks/ui_visual_revamp_20260308/)*
+- [x] **Track: UI Visual Revamp**
+*Link: [./archive/ui_visual_revamp_20260308/](./archive/ui_visual_revamp_20260308/)*
 
 - [ ] **Track: Audio Loopback Recording**
 *Link: [./tracks/audio_loopback_recording_20260308/](./tracks/audio_loopback_recording_20260308/)*
