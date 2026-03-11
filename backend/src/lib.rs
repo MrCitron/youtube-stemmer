@@ -391,16 +391,24 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
             std::env::set_var("ORT_DISABLE_TELEMETRY", "1");
 
             if let Some(lp) = lib_path_str {
-                println!("Rust: Initializing ORT from {}", lp);
+                println!("Rust: Initializing ORT from path: {}", lp);
                 if !Path::new(&lp).exists() {
-                    return Err(format!("ORT library not found: {}", lp));
+                    return Err(format!("ORT library not found at: {}", lp));
                 }
                 
-                println!("Rust: Calling ort::init_from(&lp).commit()...");
-                let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
-                println!("Rust: ort::init_from().commit() result: {}", initialized);
+                println!("Rust: [CRITICAL] Calling ort::init_from()... This may hang if macOS blocks the dylib.");
+                // Use a standard builder pattern if possible
+                let init_res = ort::init_from(&lp).commit();
+                
+                match init_res {
+                    Ok(success) => println!("Rust: ort::init_from().commit() success: {}", success),
+                    Err(e) => {
+                        println!("Rust: ort::init_from().commit() failed: {}", e);
+                        return Err(format!("Failed to initialize ORT from library: {}", e));
+                    }
+                }
             } else {
-                println!("Rust: Initializing ORT with default strategy...");
+                println!("Rust: No library path provided, using default ORT initialization...");
                 let _ = ort::init().commit();
             }
             let mut init_guard = ORT_INITIALIZED.lock().unwrap();
