@@ -379,17 +379,21 @@ class _StemPlayerState extends State<StemPlayer> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    bool enabled = true,
   }) {
-    final color = isSelected ? Theme.of(context).colorScheme.primary : Colors.grey;
+    final color = !enabled 
+        ? Colors.grey.withOpacity(0.3)
+        : (isSelected ? Theme.of(context).colorScheme.primary : Colors.grey);
+    
     return InkWell(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+          color: isSelected && enabled ? color.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(isSelected ? 0.5 : 0.2)),
+          border: Border.all(color: color.withOpacity(isSelected && enabled ? 0.5 : 0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -549,6 +553,7 @@ class _StemPlayerState extends State<StemPlayer> {
               icon: Icons.av_timer,
               label: 'METRONOME',
               isSelected: _metronomeEnabled,
+              enabled: !Platform.isLinux,
               onTap: () {
                 setState(() => _metronomeEnabled = !_metronomeEnabled);
                 if (!_metronomeEnabled) _metronomeService.stop();
@@ -559,6 +564,7 @@ class _StemPlayerState extends State<StemPlayer> {
               icon: Icons.more_time_rounded,
               label: 'COUNT-IN',
               isSelected: _countInEnabled,
+              enabled: !Platform.isLinux,
               onTap: () => setState(() => _countInEnabled = !_countInEnabled),
             ),
           ],
