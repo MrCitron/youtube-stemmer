@@ -64,16 +64,27 @@ fn normalize_youtube_url(url: &str) -> String {
 
 fn get_ytdlp_path() -> String {
     let bin_name = if cfg!(windows) { "yt-dlp.exe" } else { "yt-dlp" };
-    
+
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
+            // 1. Check next to executable (Contents/MacOS/yt-dlp)
             let bundled = dir.join(bin_name);
             if bundled.exists() {
                 return bundled.to_string_lossy().to_string();
             }
+
+            // 2. Check in Resources (Contents/Resources/yt-dlp) - Standard for macOS
+            #[cfg(target_os = "macos")]
+            {
+                if let Some(contents_dir) = dir.parent() {
+                    let resources_bin = contents_dir.join("Resources").join(bin_name);
+                    if resources_bin.exists() {
+                        return resources_bin.to_string_lossy().to_string();
+                    }
+                }
+            }
         }
     }
-
     let cwd_bin = Path::new(".").join(bin_name);
     if cwd_bin.exists() {
         return cwd_bin.to_string_lossy().to_string();
