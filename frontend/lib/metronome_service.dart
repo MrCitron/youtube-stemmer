@@ -61,9 +61,6 @@ class MetronomeService {
   void _playClick() {
     if (_player == null) return;
     
-    // ignore: avoid_print
-    print('Metronome: Click at BPM $_bpm');
-
     // On Linux, we might need a more reliable way if multiple players conflict.
     // But for now we try to ensure it plays.
     _player?.seek(Duration.zero);
