@@ -447,9 +447,12 @@ class _StemPlayerState extends State<StemPlayer> {
                 // Timeline
                 Row(
                   children: [
-                    Text(
-                      _formatDuration(_position),
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_position),
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      ),
                     ),
                     Expanded(
                       child: SliderTheme(
@@ -468,9 +471,13 @@ class _StemPlayerState extends State<StemPlayer> {
                         ),
                       ),
                     ),
-                    Text(
-                      _formatDuration(_duration),
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_duration),
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
