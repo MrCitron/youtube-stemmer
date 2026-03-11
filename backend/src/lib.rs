@@ -356,6 +356,9 @@ static ORT_INITIALIZED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 
 #[no_mangle]
 pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char) -> *mut c_char {
+    // CRITICAL: The 'ort' crate MUST be pinned to 'api-19' in Cargo.toml to match 
+    // libonnxruntime 1.19.2. Higher versions (e.g. api-24) cause null API pointers
+    // and re-entrant deadlocks during error handling on macOS.
     let result = std::panic::catch_unwind(|| -> Result<(), String> {
         let model_path_str = unsafe { CStr::from_ptr(model_path) }.to_string_lossy().to_string();
         let lib_path_str = if !lib_path.is_null() {

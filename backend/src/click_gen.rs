@@ -1,6 +1,7 @@
 use std::path::Path;
 use hound;
 
+#[allow(dead_code)]
 pub fn generate_click(path: &Path) -> Result<(), String> {
     let spec = hound::WavSpec {
         channels: 1,
