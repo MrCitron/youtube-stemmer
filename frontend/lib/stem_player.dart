@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'dart:async';
 import 'dart:io';
 import 'export_ui.dart';
 import 'export_service.dart';
@@ -42,6 +43,7 @@ class _StemPlayerState extends State<StemPlayer> {
   bool _countInEnabled = false;
   final _metronomeService = MetronomeService();
   final _clickPlayer = AudioPlayer(); // Dedicated player for click
+  Timer? _syncTimer;
 
   @override
   void initState() {
@@ -102,24 +104,49 @@ class _StemPlayerState extends State<StemPlayer> {
     }
   }
 
+  // Each AudioPlayer runs its own MPV instance with an independent clock.
+  // _startSync polls every 500 ms and seeks any player that has drifted
+  // more than 50 ms from the master (first player) back into alignment.
+  void _startSync() {
+    _syncTimer?.cancel();
+    if (_players.length <= 1) return;
+    _syncTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (!_isPlaying || _players.isEmpty) return;
+      final master = _players.values.first;
+      final masterPos = master.position;
+      for (final player in _players.values.skip(1)) {
+        final drift = (player.position.inMilliseconds - masterPos.inMilliseconds).abs();
+        if (drift > 50) {
+          player.seek(masterPos);
+        }
+      }
+    });
+  }
+
+  void _stopSync() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+  }
+
   void _togglePlay() async {
     if (_players.isEmpty) return;
     if (_isPlaying) {
-      for (final player in _players.values) {
-        await player.pause();
-      }
+      _stopSync();
+      await Future.wait(_players.values.map((p) => p.pause()));
       _metronomeService.stop();
     } else {
       if (_countInEnabled) {
         await _metronomeService.playCountIn();
       }
 
-      // Ensure all players are at the same position before playing
+      // Seek all players concurrently, then fire play on all without awaiting
+      // so they start as close together as possible.
       final targetPos = _players.values.first.position;
+      await Future.wait(_players.values.map((p) => p.seek(targetPos)));
       for (final player in _players.values) {
-        await player.seek(targetPos);
         player.play();
       }
+      _startSync();
 
       if (_metronomeEnabled) {
         _metronomeService.start();
@@ -130,10 +157,9 @@ class _StemPlayerState extends State<StemPlayer> {
 
   void _stop() async {
     if (_players.isEmpty) return;
-    for (final player in _players.values) {
-      await player.pause();
-      await player.seek(Duration.zero);
-    }
+    _stopSync();
+    await Future.wait(_players.values.map((p) => p.pause()));
+    await Future.wait(_players.values.map((p) => p.seek(Duration.zero)));
     setState(() {
       _isPlaying = false;
       _position = Duration.zero;
@@ -144,9 +170,7 @@ class _StemPlayerState extends State<StemPlayer> {
     if (_players.isEmpty) return;
     final newPos = _position - const Duration(seconds: 10);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
-    for (final player in _players.values) {
-      await player.seek(targetPos);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(targetPos)));
     setState(() => _position = targetPos);
   }
 
@@ -154,17 +178,13 @@ class _StemPlayerState extends State<StemPlayer> {
     if (_players.isEmpty) return;
     final newPos = _position + const Duration(seconds: 10);
     final targetPos = newPos > _duration ? _duration : newPos;
-    for (final player in _players.values) {
-      await player.seek(targetPos);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(targetPos)));
     setState(() => _position = targetPos);
   }
 
   void _seek(Duration position) async {
     if (_players.isEmpty) return;
-    for (final player in _players.values) {
-      await player.seek(position);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(position)));
     setState(() => _position = position);
   }
 
@@ -646,6 +666,7 @@ class _StemPlayerState extends State<StemPlayer> {
 
   @override
   void dispose() {
+    _stopSync();
     for (final player in _players.values) {
       player.dispose();
     }

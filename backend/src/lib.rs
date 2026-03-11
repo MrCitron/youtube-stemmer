@@ -396,7 +396,71 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                     println!("Rust: macOS detected. Setting ORT_DYLIB_PATH to: {}", lp);
                     std::env::set_var("ORT_DYLIB_PATH", lp);
                 }
-                println!("Rust: Calling ort::init().commit()...");
+
+                // Workaround for ort 2.0.0-rc.12 deadlock on macOS with load-dynamic:
+                // When Session::builder() triggers G_ORT_API.get_or_init(setup_api), setup_api
+                // tries G_ORT_LIB.get_or_init(...) which calls libloading::Library::new(path).
+                // If that fails (or even during success), any ort::Error creation calls
+                // Error::new_internal() → api() → G_ORT_API.get_or_init(setup_api), but
+                // setup_api is already running → std::sync::Once deadlocks on itself.
+                //
+                // Fix: pre-initialize G_ORT_API via ort::set_api() BEFORE Session::builder().
+                // We load the library ourselves with a plain dlopen, get OrtGetApiBase, build
+                // the OrtApi vtable, and hand it to ort. We intentionally skip dlclose so the
+                // library remains loaded for the lifetime of the ORT session (G_ORT_LIB stays
+                // None, but Flutter's process keeps the library mapped anyway).
+                let api_initialized = if let Some(ref lp) = lib_path_str {
+                    println!("Rust: Pre-initializing ORT API via dlopen (macOS deadlock workaround)...");
+                    let c_path = std::ffi::CString::new(lp.as_str()).unwrap();
+                    unsafe {
+                        let lib_handle = libc::dlopen(c_path.as_ptr(), libc::RTLD_LAZY);
+                        if lib_handle.is_null() {
+                            let err = libc::dlerror();
+                            let msg = if err.is_null() { "(no error)".to_string() }
+                                      else { std::ffi::CStr::from_ptr(err).to_string_lossy().into_owned() };
+                            println!("Rust: Warning: dlopen failed: {}", msg);
+                            false
+                        } else {
+                            let fn_ptr = libc::dlsym(
+                                lib_handle,
+                                b"OrtGetApiBase\0".as_ptr() as *const libc::c_char,
+                            );
+                            if fn_ptr.is_null() {
+                                println!("Rust: Warning: OrtGetApiBase not found in library");
+                                libc::dlclose(lib_handle);
+                                false
+                            } else {
+                                type GetApiBaseFn = unsafe extern "C" fn() -> *const ort::sys::OrtApiBase;
+                                let get_api_base: GetApiBaseFn = std::mem::transmute(fn_ptr);
+                                let base = get_api_base();
+                                if base.is_null() {
+                                    println!("Rust: Warning: OrtGetApiBase() returned null");
+                                    libc::dlclose(lib_handle);
+                                    false
+                                } else {
+                                    let api_ptr = ((*base).GetApi)(ort::sys::ORT_API_VERSION);
+                                    if api_ptr.is_null() {
+                                        println!("Rust: Warning: GetApi({}) returned null", ort::sys::ORT_API_VERSION);
+                                        libc::dlclose(lib_handle);
+                                        false
+                                    } else {
+                                        ort::set_api((*api_ptr).clone());
+                                        // Intentionally no dlclose: keep library loaded so ORT
+                                        // API vtable function pointers remain valid.
+                                        println!("Rust: ORT API pre-initialized via dlopen");
+                                        true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    false
+                };
+
+                if !api_initialized {
+                    println!("Rust: Warning: ORT API pre-init failed; setup_api deadlock may occur");
+                }
                 let _ = ort::init().commit();
             }
 
