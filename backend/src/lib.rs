@@ -392,9 +392,11 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
 
             #[cfg(target_os = "macos")]
             {
-                println!("Rust: macOS detected, using default ORT initialization to avoid deadlock...");
-                // On macOS, if the dylib is in Frameworks, ort::init() should find it via dyld search.
-                // init_from(path) is known to trigger deadlocks in ort RC versions if load fails.
+                if let Some(ref lp) = lib_path_str {
+                    println!("Rust: macOS detected. Setting ORT_DYLIB_PATH to: {}", lp);
+                    std::env::set_var("ORT_DYLIB_PATH", lp);
+                }
+                println!("Rust: Calling ort::init().commit()...");
                 let _ = ort::init().commit();
             }
 
