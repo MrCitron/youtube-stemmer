@@ -24,7 +24,7 @@
 - [x] Task: Finalize all FFI exports to match the Go backend signatures.
 
 ## Phase 5: Validation
-- [ ] Task: Verify full end-to-end flow on Linux.
-- [ ] Task: Verify compatibility on macOS 11.0 (Big Sur).
+- [x] Task: Verify full end-to-end flow on Linux.
+- [x] Task: Verify compatibility on macOS 11.0 (Big Sur).
 - [ ] Task: Verify functionality on Windows.
 - [ ] Task: Document the new build process and library requirements.
