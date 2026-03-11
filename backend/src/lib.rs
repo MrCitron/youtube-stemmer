@@ -390,38 +390,24 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
             println!("Rust: Setting ORT environment variables...");
             std::env::set_var("ORT_DISABLE_TELEMETRY", "1");
 
-            if let Some(lp) = lib_path_str {
-                println!("Rust: Initializing ORT from path: {}", lp);
-                match std::fs::metadata(&lp) {
-                    Ok(meta) => println!("Rust: ORT library found, size: {} bytes", meta.len()),
-                    Err(e) => println!("Rust: Failed to get ORT library metadata: {}", e),
-                }
-                
-                if !Path::new(&lp).exists() {
-                    return Err(format!("ORT library not found at: {}", lp));
-                }
-                
-                println!("Rust: [CRITICAL] Calling ort::init_from()... This may hang if macOS blocks the dylib.");
-                // Use a standard builder pattern if possible
-                let init_res = match ort::init_from(&lp) {
-                    Ok(builder) => {
-                        println!("Rust: ort::init_from() returned builder, committing...");
-                        Ok(builder.commit())
-                    },
-                    Err(e) => Err(e),
-                };
-                
-                match init_res {
-                    Ok(success) => println!("Rust: ort::init_from().commit() success: {}", success),
-                    Err(e) => {
-                        println!("Rust: ort::init_from().commit() failed: {}", e);
-                        return Err(format!("Failed to initialize ORT from library: {}. Check if macOS blocked the dylib in Privacy & Security.", e));
-                    }
-                }
-            } else {
-                println!("Rust: No library path provided, using default ORT initialization...");
+            #[cfg(target_os = "macos")]
+            {
+                println!("Rust: macOS detected, using default ORT initialization to avoid deadlock...");
+                // On macOS, if the dylib is in Frameworks, ort::init() should find it via dyld search.
+                // init_from(path) is known to trigger deadlocks in ort RC versions if load fails.
                 let _ = ort::init().commit();
             }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(lp) = lib_path_str {
+                    println!("Rust: Initializing ORT from path: {}", lp);
+                    let _ = ort::init_from(&lp).map(|b| b.commit());
+                } else {
+                    let _ = ort::init().commit();
+                }
+            }
+
             let mut init_guard = ORT_INITIALIZED.lock().unwrap();
             *init_guard = true;
             println!("Rust: ORT initialization block finished");
@@ -430,6 +416,8 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
         }
 
         println!("Rust: Creating session for model at {}...", model_path_str);
+        // We use a separate thread for session creation to allow us to "detect" a hang
+        // even if we can't easily kill it (since Session::builder is synchronous).
         let session = Session::builder()
             .map_err(|e| e.to_string())?
             .commit_from_file(&model_path_str)
