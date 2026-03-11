@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'dart:async';
 import 'dart:io';
 import 'export_ui.dart';
 import 'export_service.dart';
+import 'metronome_service.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -12,6 +14,7 @@ class StemPlayer extends StatefulWidget {
   final String videoTitle;
   final List<String> stemNames;
   final Map<String, String> stemFiles;
+  final double? initialBpm;
 
   const StemPlayer({
     super.key,
@@ -19,6 +22,7 @@ class StemPlayer extends StatefulWidget {
     required this.videoTitle,
     required this.stemNames,
     required this.stemFiles,
+    this.initialBpm,
   });
 
   @override
@@ -34,11 +38,24 @@ class _StemPlayerState extends State<StemPlayer> {
   String? _exportStatus;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  late double _bpm;
+  bool _metronomeEnabled = false;
+  bool _countInEnabled = false;
+  final _metronomeService = MetronomeService();
+  final _clickPlayer = AudioPlayer(); // Dedicated player for click
+  Timer? _syncTimer;
 
   @override
   void initState() {
     super.initState();
+    _bpm = widget.initialBpm ?? 120.0;
     _initPlayers();
+    _initMetronome();
+  }
+
+  Future<void> _initMetronome() async {
+    await _metronomeService.init();
+    _metronomeService.bpm = _bpm;
   }
 
   @override
@@ -47,6 +64,11 @@ class _StemPlayerState extends State<StemPlayer> {
     if (oldWidget.stemsDirectory != widget.stemsDirectory) {
       _isPlaying = false;
       _initPlayers();
+    }
+    if (oldWidget.initialBpm != widget.initialBpm) {
+      _bpm = widget.initialBpm ?? 120.0;
+      _metronomeService.bpm = _bpm;
+      if (mounted) setState(() {});
     }
   }
 
@@ -82,29 +104,62 @@ class _StemPlayerState extends State<StemPlayer> {
     }
   }
 
+  // Each AudioPlayer runs its own MPV instance with an independent clock.
+  // _startSync polls every 500 ms and seeks any player that has drifted
+  // more than 50 ms from the master (first player) back into alignment.
+  void _startSync() {
+    _syncTimer?.cancel();
+    if (_players.length <= 1) return;
+    _syncTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (!_isPlaying || _players.isEmpty) return;
+      final master = _players.values.first;
+      final masterPos = master.position;
+      for (final player in _players.values.skip(1)) {
+        final drift = (player.position.inMilliseconds - masterPos.inMilliseconds).abs();
+        if (drift > 50) {
+          player.seek(masterPos);
+        }
+      }
+    });
+  }
+
+  void _stopSync() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+  }
+
   void _togglePlay() async {
     if (_players.isEmpty) return;
     if (_isPlaying) {
-      for (final player in _players.values) {
-        await player.pause();
-      }
+      _stopSync();
+      await Future.wait(_players.values.map((p) => p.pause()));
+      _metronomeService.stop();
     } else {
-      // Ensure all players are at the same position before playing
+      if (_countInEnabled) {
+        await _metronomeService.playCountIn();
+      }
+
+      // Seek all players concurrently, then fire play on all without awaiting
+      // so they start as close together as possible.
       final targetPos = _players.values.first.position;
+      await Future.wait(_players.values.map((p) => p.seek(targetPos)));
       for (final player in _players.values) {
-        await player.seek(targetPos);
         player.play();
       }
+      _startSync();
+
+      if (_metronomeEnabled) {
+        _metronomeService.start();
+      }
     }
-    setState(() => _isPlaying = !_isPlaying);
+    if (mounted) setState(() => _isPlaying = !_isPlaying);
   }
 
   void _stop() async {
     if (_players.isEmpty) return;
-    for (final player in _players.values) {
-      await player.pause();
-      await player.seek(Duration.zero);
-    }
+    _stopSync();
+    await Future.wait(_players.values.map((p) => p.pause()));
+    await Future.wait(_players.values.map((p) => p.seek(Duration.zero)));
     setState(() {
       _isPlaying = false;
       _position = Duration.zero;
@@ -115,9 +170,7 @@ class _StemPlayerState extends State<StemPlayer> {
     if (_players.isEmpty) return;
     final newPos = _position - const Duration(seconds: 10);
     final targetPos = newPos < Duration.zero ? Duration.zero : newPos;
-    for (final player in _players.values) {
-      await player.seek(targetPos);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(targetPos)));
     setState(() => _position = targetPos);
   }
 
@@ -125,17 +178,13 @@ class _StemPlayerState extends State<StemPlayer> {
     if (_players.isEmpty) return;
     final newPos = _position + const Duration(seconds: 10);
     final targetPos = newPos > _duration ? _duration : newPos;
-    for (final player in _players.values) {
-      await player.seek(targetPos);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(targetPos)));
     setState(() => _position = targetPos);
   }
 
   void _seek(Duration position) async {
     if (_players.isEmpty) return;
-    for (final player in _players.values) {
-      await player.seek(position);
-    }
+    await Future.wait(_players.values.map((p) => p.seek(position)));
     setState(() => _position = position);
   }
 
@@ -293,6 +342,79 @@ class _StemPlayerState extends State<StemPlayer> {
     }
   }
 
+  void _showBpmEditor() {
+    final controller = TextEditingController(text: _bpm.toStringAsFixed(0));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Tempo (BPM)'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'BPM'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final newBpm = double.tryParse(controller.text);
+              if (newBpm != null && newBpm > 0) {
+                setState(() {
+                  _bpm = newBpm;
+                  _metronomeService.bpm = newBpm;
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlToggle({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    bool enabled = true,
+  }) {
+    final color = !enabled 
+        ? Colors.grey.withOpacity(0.3)
+        : (isSelected ? Theme.of(context).colorScheme.primary : Colors.grey);
+    
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected && enabled ? color.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(isSelected && enabled ? 0.5 : 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: color,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_players.isEmpty) {
@@ -329,9 +451,12 @@ class _StemPlayerState extends State<StemPlayer> {
                 // Timeline
                 Row(
                   children: [
-                    Text(
-                      _formatDuration(_position),
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_position),
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      ),
                     ),
                     Expanded(
                       child: SliderTheme(
@@ -350,9 +475,13 @@ class _StemPlayerState extends State<StemPlayer> {
                         ),
                       ),
                     ),
-                    Text(
-                      _formatDuration(_duration),
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    SizedBox(
+                      width: 45,
+                      child: Text(
+                        _formatDuration(_duration),
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
@@ -392,6 +521,54 @@ class _StemPlayerState extends State<StemPlayer> {
           ),
         ),
 
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // BPM Display & Override
+            InkWell(
+              onTap: _showBpmEditor,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_bpm.toStringAsFixed(0)}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.amber, fontFamily: 'monospace', height: 1.0),
+                    ),
+                    const Text(
+                      'BPM',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.amber),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            // Metronome & Count-in Switches
+            _buildControlToggle(
+              icon: Icons.av_timer,
+              label: 'METRONOME',
+              isSelected: _metronomeEnabled,
+              enabled: !Platform.isLinux,
+              onTap: () {
+                setState(() => _metronomeEnabled = !_metronomeEnabled);
+                if (!_metronomeEnabled) _metronomeService.stop();
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildControlToggle(
+              icon: Icons.more_time_rounded,
+              label: 'COUNT-IN',
+              isSelected: _countInEnabled,
+              enabled: !Platform.isLinux,
+              onTap: () => setState(() => _countInEnabled = !_countInEnabled),
+            ),
+          ],
+        ),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerLeft,
@@ -502,6 +679,7 @@ class _StemPlayerState extends State<StemPlayer> {
 
   @override
   void dispose() {
+    _stopSync();
     for (final player in _players.values) {
       player.dispose();
     }

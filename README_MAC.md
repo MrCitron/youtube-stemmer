@@ -40,34 +40,36 @@ lipo -create -output libbackend.dylib \
    cp backend/libbackend.dylib frontend/macos/
    ```
 
-2. **Download ONNX Runtime (v1.19.2 recommended for Big Sur)**:
+2. **Download ONNX Runtime (v1.19.2 recommended)**:
    - Download the Universal2 binary: [onnxruntime-osx-universal2-1.19.2.tgz](https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-osx-universal2-1.19.2.tgz)
-   - Extract the archive.
-   - Copy `lib/libonnxruntime.1.19.2.dylib` to `frontend/macos/libonnxruntime.dylib`.
-   - **Crucial**: Ensure the file is named exactly `libonnxruntime.dylib`.
+   - Extract and copy `lib/libonnxruntime.1.19.2.dylib` to `frontend/macos/libonnxruntime.dylib`.
 
 3. **Download and Bundle yt-dlp**:
    - Download the macOS binary: [yt-dlp_macos](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos)
    - Rename it to `yt-dlp` and make it executable: `chmod +x yt-dlp`
-   - Copy it to the `frontend/macos/` folder: `cp yt-dlp frontend/macos/`
+   - Copy it to the `frontend/macos/` folder.
 
-## 4. Run the Application
+## 4. Xcode Configuration (CRITICAL)
 
-Navigate to the `frontend` directory and run:
+To ensure the application can find the bundled tools and libraries:
+
+1. **Open Xcode**: `open frontend/macos/Runner.xcworkspace`
+2. **Add yt-dlp to Bundle**:
+   - Right-click the **Runner** folder in the Project Navigator.
+   - Select **"Add Files to 'Runner'..."**.
+   - Select the `yt-dlp` binary.
+   - Ensure **"Copy items if needed"** is checked and the **Runner** target is selected.
+3. **Verify yt-dlp in Build Phases**:
+   - Select the project -> **Runner** target -> **Build Phases**.
+   - Ensure `yt-dlp` is listed in **"Copy Bundle Resources"**.
+4. **Configure Libraries**:
+   - Under the **General** tab of the **Runner** target, find **"Frameworks, Libraries, and Embedded Content"**.
+   - Ensure both `libbackend.dylib` and `libonnxruntime.dylib` are present and set to **"Embed & Sign"**.
+
+## 5. Run the Application
 
 ```bash
 cd frontend
 flutter pub get
 flutter run -d macos
 ```
-
-## 5. Troubleshooting
-
-### "yt-dlp not found" or "Failed to execute yt-dlp"
-The application expects `yt-dlp` to be bundled inside the app. For local development:
-1. Open the project in Xcode: `open macos/Runner.xcworkspace`.
-2. Add the `yt-dlp` binary from the `macos/` folder to the **Runner** target (similar to how you added the dylibs).
-3. In the **"Build Phases"** tab, under **"Copy Bundle Resources"**, ensure `yt-dlp` is listed.
-
-### FFmpeg (NOT NEEDED)
-The new Rust backend handles audio decoding natively. You do NOT need to install FFmpeg.

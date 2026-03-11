@@ -10,13 +10,14 @@ use ndarray::Array3;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
-use std::time::Duration;
 use symphonia::core::audio::Signal;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
+
+mod tempo;
+mod click_gen;
 
 static ABORT: AtomicBool = AtomicBool::new(false);
 
@@ -61,16 +62,27 @@ fn normalize_youtube_url(url: &str) -> String {
 
 fn get_ytdlp_path() -> String {
     let bin_name = if cfg!(windows) { "yt-dlp.exe" } else { "yt-dlp" };
-    
+
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
+            // 1. Check next to executable (Contents/MacOS/yt-dlp)
             let bundled = dir.join(bin_name);
             if bundled.exists() {
                 return bundled.to_string_lossy().to_string();
             }
+
+            // 2. Check in Resources (Contents/Resources/yt-dlp) - Standard for macOS
+            #[cfg(target_os = "macos")]
+            {
+                if let Some(contents_dir) = dir.parent() {
+                    let resources_bin = contents_dir.join("Resources").join(bin_name);
+                    if resources_bin.exists() {
+                        return resources_bin.to_string_lossy().to_string();
+                    }
+                }
+            }
         }
     }
-
     let cwd_bin = Path::new(".").join(bin_name);
     if cwd_bin.exists() {
         return cwd_bin.to_string_lossy().to_string();
@@ -118,6 +130,36 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
     let final_res = match result {
         Ok(s) => s,
         Err(_) => "Error: Panic in GetMetadata".to_string(),
+    };
+    CString::new(final_res).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn FreeStemmer() {
+    println!("Rust: FreeStemmer entered");
+    let mut guard = STEMMER.lock().unwrap();
+    *guard = None;
+    println!("Rust: Stemmer session dropped");
+}
+
+#[no_mangle]
+pub extern "C" fn GetEstimatedBPM(path: *const c_char) -> *mut c_char {
+    let result = std::panic::catch_unwind(|| {
+        if path.is_null() {
+            return "Error: Null path".to_string();
+        }
+        let path_raw = unsafe { CStr::from_ptr(path) }.to_string_lossy();
+        let path_obj = Path::new(&*path_raw);
+        
+        match tempo::estimate_bpm(path_obj) {
+            Ok(bpm) => format!("{:.2}", bpm),
+            Err(e) => format!("Error: {}", e),
+        }
+    });
+
+    let final_res = match result {
+        Ok(s) => s,
+        Err(_) => "Error: Panic in GetEstimatedBPM".to_string(),
     };
     CString::new(final_res).unwrap().into_raw()
 }
@@ -312,6 +354,9 @@ static ORT_INITIALIZED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 
 #[no_mangle]
 pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char) -> *mut c_char {
+    // CRITICAL: The 'ort' crate MUST be pinned to 'api-19' in Cargo.toml to match 
+    // libonnxruntime 1.19.2. Higher versions (e.g. api-24) cause null API pointers
+    // and re-entrant deadlocks during error handling on macOS.
     let result = std::panic::catch_unwind(|| -> Result<(), String> {
         let model_path_str = unsafe { CStr::from_ptr(model_path) }.to_string_lossy().to_string();
         let lib_path_str = if !lib_path.is_null() {
@@ -321,14 +366,6 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
         };
         
         println!("Rust: InitStemmer entered. Model: {}", model_path_str);
-
-        // Start a heartbeat thread to show we aren't totally locked up
-        thread::spawn(|| {
-            for i in 1..20 {
-                thread::sleep(Duration::from_secs(5));
-                println!("Rust: Heartbeat {} - Still alive during initialization...", i * 5);
-            }
-        });
 
         if !Path::new(&model_path_str).exists() {
             return Err(format!("Model file not found: {}", model_path_str));
@@ -346,19 +383,90 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
             println!("Rust: Setting ORT environment variables...");
             std::env::set_var("ORT_DISABLE_TELEMETRY", "1");
 
-            if let Some(lp) = lib_path_str {
-                println!("Rust: Initializing ORT from {}", lp);
-                if !Path::new(&lp).exists() {
-                    return Err(format!("ORT library not found: {}", lp));
+            #[cfg(target_os = "macos")]
+            {
+                if let Some(ref lp) = lib_path_str {
+                    println!("Rust: macOS detected. Setting ORT_DYLIB_PATH to: {}", lp);
+                    std::env::set_var("ORT_DYLIB_PATH", lp);
                 }
-                
-                println!("Rust: Calling ort::init_from(&lp).commit()...");
-                let initialized = ort::init_from(&lp).map_err(|e| e.to_string())?.commit();
-                println!("Rust: ort::init_from().commit() result: {}", initialized);
-            } else {
-                println!("Rust: Initializing ORT with default strategy...");
+
+                // Workaround for ort 2.0.0-rc.12 deadlock on macOS with load-dynamic:
+                // When Session::builder() triggers G_ORT_API.get_or_init(setup_api), setup_api
+                // tries G_ORT_LIB.get_or_init(...) which calls libloading::Library::new(path).
+                // If that fails (or even during success), any ort::Error creation calls
+                // Error::new_internal() → api() → G_ORT_API.get_or_init(setup_api), but
+                // setup_api is already running → std::sync::Once deadlocks on itself.
+                //
+                // Fix: pre-initialize G_ORT_API via ort::set_api() BEFORE Session::builder().
+                // We load the library ourselves with a plain dlopen, get OrtGetApiBase, build
+                // the OrtApi vtable, and hand it to ort. We intentionally skip dlclose so the
+                // library remains loaded for the lifetime of the ORT session (G_ORT_LIB stays
+                // None, but Flutter's process keeps the library mapped anyway).
+                let api_initialized = if let Some(ref lp) = lib_path_str {
+                    println!("Rust: Pre-initializing ORT API via dlopen (macOS deadlock workaround)...");
+                    let c_path = std::ffi::CString::new(lp.as_str()).unwrap();
+                    unsafe {
+                        let lib_handle = libc::dlopen(c_path.as_ptr(), libc::RTLD_LAZY);
+                        if lib_handle.is_null() {
+                            let err = libc::dlerror();
+                            let msg = if err.is_null() { "(no error)".to_string() }
+                                      else { std::ffi::CStr::from_ptr(err).to_string_lossy().into_owned() };
+                            println!("Rust: Warning: dlopen failed: {}", msg);
+                            false
+                        } else {
+                            let fn_ptr = libc::dlsym(
+                                lib_handle,
+                                b"OrtGetApiBase\0".as_ptr() as *const libc::c_char,
+                            );
+                            if fn_ptr.is_null() {
+                                println!("Rust: Warning: OrtGetApiBase not found in library");
+                                libc::dlclose(lib_handle);
+                                false
+                            } else {
+                                type GetApiBaseFn = unsafe extern "C" fn() -> *const ort::sys::OrtApiBase;
+                                let get_api_base: GetApiBaseFn = std::mem::transmute(fn_ptr);
+                                let base = get_api_base();
+                                if base.is_null() {
+                                    println!("Rust: Warning: OrtGetApiBase() returned null");
+                                    libc::dlclose(lib_handle);
+                                    false
+                                } else {
+                                    let api_ptr = ((*base).GetApi)(ort::sys::ORT_API_VERSION);
+                                    if api_ptr.is_null() {
+                                        println!("Rust: Warning: GetApi({}) returned null", ort::sys::ORT_API_VERSION);
+                                        libc::dlclose(lib_handle);
+                                        false
+                                    } else {
+                                        ort::set_api((*api_ptr).clone());
+                                        // Intentionally no dlclose: keep library loaded so ORT
+                                        // API vtable function pointers remain valid.
+                                        println!("Rust: ORT API pre-initialized via dlopen");
+                                        true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    false
+                };
+
+                if !api_initialized {
+                    println!("Rust: Warning: ORT API pre-init failed; setup_api deadlock may occur");
+                }
                 let _ = ort::init().commit();
             }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(lp) = lib_path_str {
+                    println!("Rust: Initializing ORT from path: {}", lp);
+                    let _ = ort::init_from(&lp).map(|b| b.commit());
+                } else {
+                    let _ = ort::init().commit();
+                }
+            }
+
             let mut init_guard = ORT_INITIALIZED.lock().unwrap();
             *init_guard = true;
             println!("Rust: ORT initialization block finished");
@@ -367,6 +475,8 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
         }
 
         println!("Rust: Creating session for model at {}...", model_path_str);
+        // We use a separate thread for session creation to allow us to "detect" a hang
+        // even if we can't easily kill it (since Session::builder is synchronous).
         let session = Session::builder()
             .map_err(|e| e.to_string())?
             .commit_from_file(&model_path_str)
@@ -439,11 +549,14 @@ pub extern "C" fn SplitAudio(
             }
 
             let input_value = Value::from_array(input_tensor).map_err(|e| e.to_string())?;
+            println!("Rust: [Chunk {}/{}] Running AI inference...", c + 1, num_chunks);
             let outputs = stemmer.session.run(ort::inputs![input_value]).map_err(|e| e.to_string())?;
+            println!("Rust: [Chunk {}/{}] AI inference complete.", c + 1, num_chunks);
             
             let output_tensor = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
             let output_data = output_tensor.1;
 
+            println!("Rust: [Chunk {}/{}] Processing output data...", c + 1, num_chunks);
             for s in 0..stem_names_vec.len() {
                 for i in 0..current_chunk_len {
                     for ch in 0..2 {
@@ -455,6 +568,7 @@ pub extern "C" fn SplitAudio(
 
             if let Some(callback) = cb {
                 if !ABORT.load(Ordering::Relaxed) {
+                    println!("Rust: [Chunk {}/{}] Invoking progress callback...", c + 1, num_chunks);
                     callback(c as f64 / num_chunks as f64);
                 }
             }

@@ -8,7 +8,7 @@
 PRODUCT_NAME = youtube_stemmer
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.metinosman.youtubestemmer.youtubeStemmer
+PRODUCT_BUNDLE_IDENTIFIER = com.metinosman.youtubestemmer
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.metinosman.youtube_stemmer. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.metinosman.youtubestemmer. All rights reserved.
