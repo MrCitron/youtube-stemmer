@@ -66,6 +66,9 @@ typedef FreeString = void Function(ffi.Pointer<Utf8> str);
 typedef CancelTasksFunc = ffi.Void Function();
 typedef CancelTasks = void Function();
 
+typedef FreeStemmerFunc = ffi.Void Function();
+typedef FreeStemmer = void Function();
+
 class BackendFFI {
   static final BackendFFI _instance = BackendFFI._internal();
   factory BackendFFI() => _instance;
@@ -83,6 +86,7 @@ class BackendFFI {
   late final GetMetadata _checkStatus;
   late final CancelTasks _cancelTasks;
   late final GetEstimatedBPM _getEstimatedBPM;
+  late final FreeStemmer _freeStemmer;
 
   BackendFFI._internal() {
     final libPath = _getLibraryPath();
@@ -111,11 +115,15 @@ class BackendFFI {
     _cancelTasks = _lib.lookup<ffi.NativeFunction<CancelTasksFunc>>('CancelTasks').asFunction();
 
     _getEstimatedBPM = _lib.lookup<ffi.NativeFunction<GetEstimatedBPMFunc>>('GetEstimatedBPM').asFunction();
+
+    _freeStemmer = _lib.lookup<ffi.NativeFunction<FreeStemmerFunc>>('FreeStemmer').asFunction();
   }
 
   void helloWorld() => _helloWorld();
 
   void cancelTasks() => _cancelTasks();
+
+  void freeStemmer() => _freeStemmer();
 
   String checkStatus() {
     try {

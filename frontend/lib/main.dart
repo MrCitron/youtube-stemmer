@@ -157,6 +157,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // Signal the native backend to abort its tasks.
     BackendFFI().cancelTasks();
     
+    // Free the stemmer session to release locks and resources.
+    BackendFFI().freeStemmer();
+    
     // Brief delay to allow the native library to recognize the abort signal 
     // and stop invoking any callbacks into Dart, avoiding crashes during unwind.
     await Future.delayed(const Duration(milliseconds: 200));

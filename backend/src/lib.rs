@@ -126,6 +126,14 @@ pub extern "C" fn GetMetadata(url: *const c_char) -> *mut c_char {
 }
 
 #[no_mangle]
+pub extern "C" fn FreeStemmer() {
+    println!("Rust: FreeStemmer entered");
+    let mut guard = STEMMER.lock().unwrap();
+    *guard = None;
+    println!("Rust: Stemmer session dropped");
+}
+
+#[no_mangle]
 pub extern "C" fn GetEstimatedBPM(path: *const c_char) -> *mut c_char {
     let result = std::panic::catch_unwind(|| {
         if path.is_null() {
@@ -464,11 +472,14 @@ pub extern "C" fn SplitAudio(
             }
 
             let input_value = Value::from_array(input_tensor).map_err(|e| e.to_string())?;
+            println!("Rust: [Chunk {}/{}] Running AI inference...", c + 1, num_chunks);
             let outputs = stemmer.session.run(ort::inputs![input_value]).map_err(|e| e.to_string())?;
+            println!("Rust: [Chunk {}/{}] AI inference complete.", c + 1, num_chunks);
             
             let output_tensor = outputs[0].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
             let output_data = output_tensor.1;
 
+            println!("Rust: [Chunk {}/{}] Processing output data...", c + 1, num_chunks);
             for s in 0..stem_names_vec.len() {
                 for i in 0..current_chunk_len {
                     for ch in 0..2 {
@@ -480,6 +491,7 @@ pub extern "C" fn SplitAudio(
 
             if let Some(callback) = cb {
                 if !ABORT.load(Ordering::Relaxed) {
+                    println!("Rust: [Chunk {}/{}] Invoking progress callback...", c + 1, num_chunks);
                     callback(c as f64 / num_chunks as f64);
                 }
             }
