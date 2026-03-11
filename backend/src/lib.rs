@@ -398,13 +398,16 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                 
                 println!("Rust: [CRITICAL] Calling ort::init_from()... This may hang if macOS blocks the dylib.");
                 // Use a standard builder pattern if possible
-                let init_res = ort::init_from(&lp).commit();
+                let init_res = match ort::init_from(&lp) {
+                    Ok(builder) => Ok(builder.commit()),
+                    Err(e) => Err(e),
+                };
                 
                 match init_res {
                     Ok(success) => println!("Rust: ort::init_from().commit() success: {}", success),
                     Err(e) => {
                         println!("Rust: ort::init_from().commit() failed: {}", e);
-                        return Err(format!("Failed to initialize ORT from library: {}", e));
+                        return Err(format!("Failed to initialize ORT from library: {}. Check if macOS blocked the dylib in Privacy & Security.", e));
                     }
                 }
             } else {
