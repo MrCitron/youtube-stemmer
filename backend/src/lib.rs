@@ -392,6 +392,11 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
 
             if let Some(lp) = lib_path_str {
                 println!("Rust: Initializing ORT from path: {}", lp);
+                match std::fs::metadata(&lp) {
+                    Ok(meta) => println!("Rust: ORT library found, size: {} bytes", meta.len()),
+                    Err(e) => println!("Rust: Failed to get ORT library metadata: {}", e),
+                }
+                
                 if !Path::new(&lp).exists() {
                     return Err(format!("ORT library not found at: {}", lp));
                 }
@@ -399,7 +404,10 @@ pub extern "C" fn InitStemmer(model_path: *const c_char, lib_path: *const c_char
                 println!("Rust: [CRITICAL] Calling ort::init_from()... This may hang if macOS blocks the dylib.");
                 // Use a standard builder pattern if possible
                 let init_res = match ort::init_from(&lp) {
-                    Ok(builder) => Ok(builder.commit()),
+                    Ok(builder) => {
+                        println!("Rust: ort::init_from() returned builder, committing...");
+                        Ok(builder.commit())
+                    },
                     Err(e) => Err(e),
                 };
                 

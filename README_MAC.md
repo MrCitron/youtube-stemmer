@@ -73,12 +73,19 @@ The application expects `yt-dlp` to be bundled inside the app. For local develop
 If the application hangs while "Initializing ORT" (look for `Rust: Calling ort::init_from(&lp).commit()...` in logs), it usually means macOS is blocking the loading of `libonnxruntime.dylib`.
 
 1. **Gatekeeper / Security**: macOS may block the library because it's from an "unidentified developer".
-   - Go to **System Settings > Privacy & Security**.
-   - Look for a message saying `libonnxruntime.dylib` was blocked and click **"Allow Anyway"**.
-   - Restart the app.
-2. **Architecture Mismatch**: Ensure you downloaded the **Universal2** version of ONNX Runtime. If you are on an Intel Mac (2019) and use an ARM-only dylib (or vice versa), it may hang or crash.
-3. **Library Path**: Ensure the library is correctly copied to the `Frameworks` folder in Xcode.
-   - Open Xcode.
+   - **The fix**: Open your terminal and run the following command to remove the quarantine flag from the library:
+     ```bash
+     # Navigate to your project root
+     cd /Users/metinosman/devhome/projects/perso/youtube-stemmer
+     
+     # Remove quarantine flag
+     sudo xattr -d com.apple.quarantine frontend/macos/libonnxruntime.dylib
+     sudo xattr -d com.apple.quarantine frontend/macos/libbackend.dylib
+     ```
+   - Alternatively, go to **System Settings > Privacy & Security**, look for a message about `libonnxruntime.dylib`, and click **"Allow Anyway"**.
+2. **Architecture Mismatch**: Ensure you downloaded the **Universal2** version of ONNX Runtime. An Intel Mac (2019) requires the x86_64 slice, while Apple Silicon (M1/M2/M3) requires ARM64. The Universal2 binary contains both.
+3. **Xcode Embedding**: Ensure `libonnxruntime.dylib` is correctly embedded:
+   - Open Xcode: `open frontend/macos/Runner.xcworkspace`.
    - Select the **Runner** target.
    - Go to **General > Frameworks, Libraries, and Embedded Content**.
    - Ensure `libonnxruntime.dylib` is present and set to **"Embed & Sign"**.
