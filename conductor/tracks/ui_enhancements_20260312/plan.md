@@ -6,11 +6,11 @@
 - [x] Task: Implement and enforce a minimum window width (e.g., 600px) using `window_manager`.
 - [x] Task: Conductor - User Manual Verification 'Smart Theming & Window Management' (Protocol in workflow.md)
 
-## Phase 2: Database Extensions
+## Phase 2: Database Extensions [checkpoint: f462d80]
 - [x] Task: Update the SQLite schema to support a new `url_history` table (URL, Video Title, Timestamp).
 - [x] Task: Implement a logic to store the 10 most recent *successful* processing URLs in the `url_history` table.
 - [x] Task: Update the `history` table/model to ensure project titles are independently editable.
-- [ ] Task: Conductor - User Manual Verification 'Database Extensions' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Database Extensions' (Protocol in workflow.md)
 
 ## Phase 3: Smart URL Input UI
 - [ ] Task: Redesign the URL input field to trigger a dropdown on focus/click.
