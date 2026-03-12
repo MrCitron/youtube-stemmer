@@ -41,4 +41,4 @@ This file tracks the high-level progress of the project.
 ---
 
 - [x] **Track: GitHub Release Pipeline**
-*Link: [./tracks/github_release_pipeline_20260312/](./tracks/github_release_pipeline_20260312/)*
+*Link: [./archive/github_release_pipeline_20260312/](./archive/github_release_pipeline_20260312/)*
