@@ -90,24 +90,41 @@ class MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    const Color lightPrimary = Color(0xFFBB86FC);
+    final lightColorScheme = ColorScheme.fromSeed(seedColor: lightPrimary).copyWith(
+      primary: lightPrimary,
+      onPrimary: Colors.white,
+    );
+    final darkColorScheme = ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+      surface: backgroundDark,
+    ).copyWith(
+      primary: primaryColor,
+      onPrimary: Colors.white,
+      surface: backgroundDark,
+      onSurface: Colors.white,
+      surfaceContainerHighest: surfaceDark,
+      outline: borderDark,
+    );
+
     return MaterialApp(
       title: 'YouTube Stemmer',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
+        colorScheme: lightColorScheme,
         useMaterial3: true,
         fontFamily: 'Inter',
+        cardTheme: CardThemeData(
+          color: lightColorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: lightColorScheme.outline.withOpacity(0.1)),
+          ),
+          elevation: 0,
+        ),
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryColor,
-          brightness: Brightness.dark,
-          surface: backgroundDark,
-        ).copyWith(
-          surface: backgroundDark,
-          onSurface: Colors.white,
-          surfaceContainerHighest: surfaceDark,
-          outline: borderDark,
-        ),
+        colorScheme: darkColorScheme,
         scaffoldBackgroundColor: backgroundDark,
         useMaterial3: true,
         fontFamily: 'Inter',
@@ -875,19 +892,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
               if (_stemsDirectory != null) ...[
                 const SizedBox(height: 24),
-                Text('Active Project', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: StemPlayer(
-                      stemsDirectory: _stemsDirectory!,
-                      videoTitle: _videoTitle ?? 'stems',
-                      stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
-                      stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
-                      initialBpm: _bpm,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Text(
+                    'PLAYER',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                StemPlayer(
+                  stemsDirectory: _stemsDirectory!,
+                  videoTitle: _videoTitle ?? 'stems',
+                  stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
+                  stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
+                  initialBpm: _bpm,
                 ),
               ],
             ],

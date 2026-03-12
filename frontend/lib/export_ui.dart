@@ -43,7 +43,9 @@ class _ExportUIState extends State<ExportUI> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Theme.of(context).colorScheme.surface 
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
               ),
@@ -62,6 +64,9 @@ class _ExportUIState extends State<ExportUI> {
                   visualDensity: VisualDensity.compact,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   side: BorderSide.none,
+                  selectedBackgroundColor: Theme.of(context).colorScheme.primary,
+                  selectedForegroundColor: Colors.white,
+                  backgroundColor: Colors.transparent,
                 ),
               ),
             ),
@@ -88,7 +93,7 @@ class _ExportUIState extends State<ExportUI> {
           Row(
             children: [
               Expanded(
-                child: FilledButton.tonalIcon(
+                child: FilledButton.icon(
                   onPressed: () => widget.onExportZip(_selectedFormat),
                   icon: const Icon(Icons.folder_zip_outlined, size: 18),
                   label: const Text('Export ZIP'),
@@ -100,7 +105,7 @@ class _ExportUIState extends State<ExportUI> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton.tonalIcon(
+                child: FilledButton.icon(
                   onPressed: () => widget.onExportMix(_selectedFormat),
                   icon: const Icon(Icons.equalizer_rounded, size: 18),
                   label: const Text('Mixdown'),
