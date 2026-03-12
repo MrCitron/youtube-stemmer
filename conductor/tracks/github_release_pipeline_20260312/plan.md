@@ -12,7 +12,7 @@
 - [x] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
 - [x] Task: Conductor - User Manual Verification 'Linux Build & Package' (Protocol in workflow.md)
 
-## Phase 3: macOS Build & Package
+## Phase 3: macOS Build & Package [checkpoint: 89407bc]
 - [x] Task: Implement Rust backend build step for macOS (Universal Binary).
 - [x] Task: Implement Flutter frontend build step for macOS.
 - [x] Task: Implement packaging logic (e.g., zip) for macOS assets.
