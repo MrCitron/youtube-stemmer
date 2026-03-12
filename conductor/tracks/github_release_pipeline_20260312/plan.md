@@ -1,9 +1,9 @@
 # Implementation Plan: github_release_pipeline_20260312
 
 ## Phase 1: Pipeline Infrastructure
-- [ ] Task: Create the GitHub Actions workflow file (`.github/workflows/release.yml`).
-- [ ] Task: Implement the trigger logic for `v*` tags.
-- [ ] Task: Configure the job matrix for Linux and macOS environments.
+- [x] Task: Create the GitHub Actions workflow file (`.github/workflows/release.yml`).
+- [x] Task: Implement the trigger logic for `v*` tags.
+- [x] Task: Configure the job matrix for Linux and macOS environments.
 - [ ] Task: Conductor - User Manual Verification 'Pipeline Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Linux Build & Package
