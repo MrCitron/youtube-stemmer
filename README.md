@@ -17,6 +17,14 @@ A high-performance, cross-platform desktop application for musicians. Retrieve a
 - **High Performance:** Core logic powered by a **Rust** backend and **ONNX Runtime** for fast, local inference.
 - **Privacy First:** All processing happens locally on your machine. No audio is ever uploaded to a server.
 
+## 📖 Usage
+
+1.  **Enter URL:** Paste a YouTube link into the search bar and click **Process**.
+2.  **Wait for AI:** The app will download the audio and use the HTDemucs model to split it into stems.
+3.  **Studio Mixer:** Once processed, use the mixer to Solo or Mute specific tracks (Vocals, Drums, Bass, etc.).
+4.  **Smart Metronome:** Enable the metronome to stay in sync. The app automatically estimates the BPM for you!
+5.  **Export:** Save your custom mix or individual stems as a ZIP file for use in your favorite DAW.
+
 ## 🛠️ Building the application
 
 ### Prerequisites
@@ -48,6 +56,22 @@ A high-performance, cross-platform desktop application for musicians. Retrieve a
 - [macOS Build Notes](README_MAC.md) - Specific steps for Apple Silicon/Intel Universal binaries.
 - [Backend Details](backend/README.md) - Rust core and FFI specifications.
 - [Frontend Details](frontend/README.md) - Flutter UI architecture and dependencies.
+
+## ❓ Troubleshooting
+
+### FFI / Shared Library Errors
+If the application fails to start or shows a "Library not found" error:
+- Ensure `libbackend` and `libonnxruntime` are in the application directory (or `LD_LIBRARY_PATH` on Linux).
+- On macOS, ensure the libraries are correctly embedded and signed in Xcode.
+
+### AI Model Issues
+The first time you run the application, it will download the AI models (approx. 80MB).
+- Ensure you have an active internet connection.
+- If the download fails, check the logs for specific network errors.
+
+### Linux Audio
+If the metronome is silent or audio doesn't play:
+- Ensure `libmpv` is installed (`sudo apt install libmpv-dev` on Ubuntu/Debian).
 
 ## ⚖️ Legal Disclaimer
 

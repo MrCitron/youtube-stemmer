@@ -11,8 +11,8 @@
 - [x] Task: Consolidate build steps into a comprehensive `BUILD.md` file.
 
 ## Phase 3: User Guide
-- [~] Task: Add a "Usage" section to the root README with screenshots/gifs (if possible).
-- [ ] Task: Document common troubleshooting steps (e.g., FFI loading errors).
+- [x] Task: Add a "Usage" section to the root README with screenshots/gifs (if possible).
+- [x] Task: Document common troubleshooting steps (e.g., FFI loading errors).
 
 ## Phase 4: Validation
 - [ ] Task: Review all documentation for clarity and completeness.
