@@ -1,6 +1,6 @@
 # Implementation Plan: github_release_pipeline_20260312
 
-## Phase 1: Pipeline Infrastructure
+## Phase 1: Pipeline Infrastructure [checkpoint: c0d90be]
 - [x] Task: Create the GitHub Actions workflow file (`.github/workflows/release.yml`).
 - [x] Task: Implement the trigger logic for `v*` tags.
 - [x] Task: Configure the job matrix for Linux and macOS environments.
