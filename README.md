@@ -2,22 +2,22 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
-[![Licence](https://img.shields.io/badge/Licence-MIT-green?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Polyform_NonCommercial-red?style=for-the-badge)](LICENSE)
 
 A high-performance, cross-platform desktop application for musicians. Retrieve any song from YouTube and split it into individual instrument stems (vocals, drums, bass, etc.) using local AI models.
 
-![App Screenshot](mockups/screen.png)
+![App Screenshot](docs/assets/screenshot.png)
 
 ## 🚀 Features
 
 - **AI Source Separation:** Isolate vocals, drums, bass, and other instruments with high fidelity using the **HTDemucs** model.
 - **Smart Metronome:** Automatic BPM estimation and a synchronized metronome with count-in support.
-- **Studio Mixer:** Professional multi-track player with real-time Solo/Mute logic and volume controls.
+- **Studio Mixer:** Multi-track player with real-time Solo/Mute logic and volume controls.
 - **Project History:** Keep track of all your processed songs with persistent local storage.
 - **High Performance:** Core logic powered by a **Rust** backend and **ONNX Runtime** for fast, local inference.
 - **Privacy First:** All processing happens locally on your machine. No audio is ever uploaded to a server.
 
-## 🛠️ Getting Started
+## 🛠️ Building the application
 
 ### Prerequisites
 
@@ -59,10 +59,12 @@ This tool is designed for **educational and practice purposes only**. By using t
 
 YouTube Stemmer does not host any content. The user is responsible for ensuring they have the legal right to process the audio they retrieve.
 
+**Development Note:** This application has been built using **Gemini with Conductor extension**, **Stitch**, and **Claude Code**.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) (coming soon) before submitting a PR.
 
 ---
 
-*Made with ❤️ for musicians.*
+*Made with ❤️ for musicians by MrCitron.*
