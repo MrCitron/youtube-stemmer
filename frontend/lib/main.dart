@@ -12,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:isolate';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart' show getDirectoryPath;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -268,16 +268,9 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     try {
-      // 1. Get Metadata
+      // 1. Get Metadata (run off the main thread to avoid UI freeze)
       LogService().debug('Calling GetMetadata for $url');
-      final backend = BackendFFI();
-      
-      // Basic check first
-      LogService().debug('Calling CheckStatus...');
-      final status = backend.checkStatus();
-      LogService().debug('CheckStatus result: $status');
-
-      final metadata = backend.getMetadata(url);
+      final metadata = await compute(_getMetadataCompute, url);
       LogService().debug('GetMetadata result: $metadata');
       
       if (metadata.startsWith('Error:')) {
@@ -528,7 +521,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _loadLocalStems() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    String? selectedDirectory = await getDirectoryPath();
 
     if (selectedDirectory != null) {
       final dir = Directory(selectedDirectory);

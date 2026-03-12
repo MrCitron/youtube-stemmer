@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
 class HistoryItem {
@@ -62,8 +63,8 @@ class HistoryService {
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'youtube_stemmer.db');
+    final appSupportDir = await getApplicationSupportDirectory();
+    final path = join(appSupportDir.path, 'youtube_stemmer.db');
 
     return await openDatabase(
       path,
