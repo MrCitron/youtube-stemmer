@@ -42,7 +42,6 @@ class _StemPlayerState extends State<StemPlayer> {
   bool _metronomeEnabled = false;
   bool _countInEnabled = false;
   final _metronomeService = MetronomeService();
-  final _clickPlayer = AudioPlayer(); // Dedicated player for click
   Timer? _syncTimer;
 
   @override
@@ -135,14 +134,15 @@ class _StemPlayerState extends State<StemPlayer> {
       await Future.wait(_players.values.map((p) => p.pause()));
       _metronomeService.stop();
     } else {
+      // Pre-seek all players before count-in so we can fire play() immediately
+      // after the count-in completes without any additional async delay.
+      final targetPos = _players.values.first.position;
+      await Future.wait(_players.values.map((p) => p.seek(targetPos)));
+
       if (_countInEnabled) {
         await _metronomeService.playCountIn();
       }
 
-      // Seek all players concurrently, then fire play on all without awaiting
-      // so they start as close together as possible.
-      final targetPos = _players.values.first.position;
-      await Future.wait(_players.values.map((p) => p.seek(targetPos)));
       for (final player in _players.values) {
         player.play();
       }
@@ -158,6 +158,7 @@ class _StemPlayerState extends State<StemPlayer> {
   void _stop() async {
     if (_players.isEmpty) return;
     _stopSync();
+    _metronomeService.stop();
     await Future.wait(_players.values.map((p) => p.pause()));
     await Future.wait(_players.values.map((p) => p.seek(Duration.zero)));
     setState(() {
@@ -556,7 +557,11 @@ class _StemPlayerState extends State<StemPlayer> {
               enabled: !Platform.isLinux,
               onTap: () {
                 setState(() => _metronomeEnabled = !_metronomeEnabled);
-                if (!_metronomeEnabled) _metronomeService.stop();
+                if (_metronomeEnabled) {
+                  if (_isPlaying) _metronomeService.start();
+                } else {
+                  _metronomeService.stop();
+                }
               },
             ),
             const SizedBox(width: 12),

@@ -557,7 +557,14 @@ class _MyHomePageState extends State<MyHomePage> {
         _videoTitle = p.basename(selectedDirectory);
         _stemNames = foundStems.keys.toList();
         _stemFiles = foundStems;
+        _bpm = null;
       });
+
+      // Detect BPM (prefer drums, fallback to first stem)
+      final analysisFileName = foundStems['drums'] ?? foundStems.values.first;
+      final analysisPath = p.join(selectedDirectory, analysisFileName);
+      final detectedBpm = await compute(_getBpmCompute, analysisPath);
+      if (mounted) setState(() => _bpm = detectedBpm);
 
       // Save to History (local import)
       await HistoryService().insertItem(HistoryItem(
@@ -566,6 +573,7 @@ class _MyHomePageState extends State<MyHomePage> {
         directory: selectedDirectory,
         stemNames: _stemNames!,
         stemFiles: foundStems,
+        bpm: detectedBpm,
         createdAt: DateTime.now(),
       ));
 
@@ -820,6 +828,13 @@ class _MyHomePageState extends State<MyHomePage> {
 String _getMetadataCompute(String url) {
   final backend = BackendFFI();
   return backend.getMetadata(url);
+}
+
+double? _getBpmCompute(String path) {
+  final backend = BackendFFI();
+  final result = backend.getEstimatedBPM(path);
+  if (result.startsWith('Error:')) return null;
+  return double.tryParse(result);
 }
 
 void _downloadAudioIsolate(Map<String, dynamic> params) {

@@ -40,3 +40,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/click.wav
+    - assets/click_down.wav
