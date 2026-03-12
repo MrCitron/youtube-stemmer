@@ -1,6 +1,7 @@
 # YouTube Stemmer
 
 [![Build Status](https://github.com/MrCitron/youtube-stemmer/actions/workflows/build.yml/badge.svg)](https://github.com/MrCitron/youtube-stemmer/actions/workflows/build.yml)
+[![Release Status](https://github.com/MrCitron/youtube-stemmer/actions/workflows/release.yml/badge.svg)](https://github.com/MrCitron/youtube-stemmer/actions/workflows/release.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-Polyform_NonCommercial-red?style=for-the-badge)](LICENSE)
