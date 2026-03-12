@@ -6,12 +6,12 @@
 - [x] Task: Add the YouTube TOS disclaimer to the root README.
 
 ## Phase 2: Technical Documentation
-- [ ] Task: Create/Update `backend/README.md` with Go build instructions and FFI specifications.
-- [ ] Task: Create/Update `frontend/README.md` with Flutter environment setup and platform-specific build commands.
-- [ ] Task: Consolidate build steps into a comprehensive `BUILD.md` file.
+- [x] Task: Create/Update `backend/README.md` with Rust build instructions and FFI specifications.
+- [x] Task: Create/Update `frontend/README.md` with Flutter environment setup and platform-specific build commands.
+- [x] Task: Consolidate build steps into a comprehensive `BUILD.md` file.
 
 ## Phase 3: User Guide
-- [ ] Task: Add a "Usage" section to the root README with screenshots/gifs (if possible).
+- [~] Task: Add a "Usage" section to the root README with screenshots/gifs (if possible).
 - [ ] Task: Document common troubleshooting steps (e.g., FFI loading errors).
 
 ## Phase 4: Validation
