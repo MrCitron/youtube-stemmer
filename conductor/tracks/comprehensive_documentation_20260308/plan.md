@@ -1,9 +1,9 @@
 # Implementation Plan: comprehensive_documentation_20260308
 
 ## Phase 1: Audit & Root Update
-- [ ] Task: Audit all existing documentation for inaccuracies.
-- [ ] Task: Update the root `README.md` with current features and a modern layout.
-- [ ] Task: Add the YouTube TOS disclaimer to the root README.
+- [x] Task: Audit all existing documentation for inaccuracies.
+- [x] Task: Update the root `README.md` with current features and a modern layout.
+- [x] Task: Add the YouTube TOS disclaimer to the root README.
 
 ## Phase 2: Technical Documentation
 - [ ] Task: Create/Update `backend/README.md` with Go build instructions and FFI specifications.
