@@ -126,6 +126,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract Release Notes
+        id: extract_notes
+        run: |
+          # Extract text between the first and second ## [ version header
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          # Use sed to get content between first and second H2 headers
+          # This assumes version headers are ## [x.y.z]
+          NOTES=$(sed -n "/^## \[$TAG_VERSION\]/,/^## \[/p" CHANGELOG.md | sed '1d;$d')
+          if [ -z "$NOTES" ]; then
+            NOTES="Release notes for $TAG_VERSION"
+          fi
+          # Handle multi-line output for GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
         with:
@@ -139,9 +155,10 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          body: ${{ steps.extract_notes.outputs.notes }}
           files: |
             youtube-stemmer-linux.tar.gz
             youtube-stemmer-macos.zip
-          generate_release_notes: true
+          generate_release_notes: false
           draft: false
           prerelease: false

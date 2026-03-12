@@ -24,7 +24,10 @@
 - [x] Task: Add the build status badge to the root `README.md`.
 - [x] Task: Update README.md 'Getting Started' section with download instructions.
 - [x] Task: Add macOS Gatekeeper instructions to README.md.
+- [x] Task: Create root CHANGELOG.md file.
+- [x] Task: Update release pipeline to use CHANGELOG.md for release notes.
 - [x] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
+
 
 ## Phase 5: Validation [checkpoint: 6f29561]
 - [x] Task: Perform a test release by pushing a dummy version tag.
