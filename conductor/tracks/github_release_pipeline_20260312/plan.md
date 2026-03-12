@@ -18,7 +18,7 @@
 - [x] Task: Implement packaging logic (e.g., zip) for macOS assets.
 - [x] Task: Conductor - User Manual Verification 'macOS Build & Package' (Protocol in workflow.md)
 
-## Phase 4: Release & Documentation
+## Phase 4: Release & Documentation [checkpoint: a161ef6]
 - [x] Task: Implement the GitHub Release creation step with auto-generated notes.
 - [x] Task: Implement the asset upload step for built Linux and macOS packages.
 - [x] Task: Add the build status badge to the root `README.md`.
