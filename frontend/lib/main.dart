@@ -30,6 +30,7 @@ void main() async {
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
+      await windowManager.setMinimumSize(const Size(600, 800));
     });
 
     sqfliteFfiInit();
@@ -62,20 +63,28 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MyApp> createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.dark; // Default to Dark for the studio look
+class MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.system; // Use Auto by default
 
   static const Color primaryColor = Color(0xFF7F0DF2);
   static const Color backgroundDark = Color(0xFF191022);
   static const Color surfaceDark = Color(0xFF251B30);
   static const Color borderDark = Color(0xFF3D2E4D);
 
-  void _toggleTheme() {
+  ThemeMode getThemeMode() => _themeMode;
+
+  void toggleTheme() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      if (_themeMode == ThemeMode.system) {
+        _themeMode = ThemeMode.light;
+      } else if (_themeMode == ThemeMode.light) {
+        _themeMode = ThemeMode.dark;
+      } else {
+        _themeMode = ThemeMode.system;
+      }
     });
   }
 
@@ -114,7 +123,7 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode,
       home: MyHomePage(
         title: 'YouTube Stemmer',
-        onToggleTheme: _toggleTheme,
+        onToggleTheme: toggleTheme,
         themeMode: _themeMode,
       ),
     );
@@ -635,9 +644,15 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: Icon(widget.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(
+              widget.themeMode == ThemeMode.system
+                  ? Icons.brightness_auto_rounded
+                  : widget.themeMode == ThemeMode.light
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+            ),
             onPressed: widget.onToggleTheme,
-            tooltip: 'Toggle Theme',
+            tooltip: 'Toggle Theme (Auto/Light/Dark)',
           ),
         ],
       ),
