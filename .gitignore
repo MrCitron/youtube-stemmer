@@ -50,6 +50,8 @@ frontend/linux/libonnxruntime.so
 *.mp3
 *.m4a
 *.zip
+# But keep bundled app assets
+!frontend/assets/*.wav
 onnx_exports/
 venv_export/
 
