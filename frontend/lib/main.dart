@@ -468,6 +468,9 @@ class _MyHomePageState extends State<MyHomePage> {
             });
             LogService().info('Stemming complete. Saved to: $outputDir');
             
+            // Save URL to history
+            HistoryService().insertUrlHistory(url, title);
+
             // Save to History
             await HistoryService().insertItem(HistoryItem(
               title: title,

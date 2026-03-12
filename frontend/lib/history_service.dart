@@ -55,20 +55,30 @@ class HistoryItem {
 class HistoryService {
   static Database? _database;
   static const String tableName = 'history';
+  static const String urlHistoryTable = 'url_history';
+  final String? dbPath;
+
+  HistoryService({this.dbPath});
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+    if (_database != null && dbPath == null) return _database!;
+    final db = await _initDatabase();
+    if (dbPath == null) _database = db;
+    return db;
   }
 
   Future<Database> _initDatabase() async {
-    final appSupportDir = await getApplicationSupportDirectory();
-    final path = join(appSupportDir.path, 'youtube_stemmer.db');
+    String path;
+    if (dbPath != null) {
+      path = dbPath!;
+    } else {
+      final appSupportDir = await getApplicationSupportDirectory();
+      path = join(appSupportDir.path, 'youtube_stemmer.db');
+    }
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $tableName (
@@ -82,14 +92,32 @@ class HistoryService {
             createdAt TEXT
           )
         ''');
+        await db.execute('''
+          CREATE TABLE $urlHistoryTable (
+            url TEXT PRIMARY KEY,
+            title TEXT,
+            timestamp TEXT
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE $tableName ADD COLUMN bpm REAL');
         }
+        if (oldVersion < 3) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS $urlHistoryTable (
+              url TEXT PRIMARY KEY,
+              title TEXT,
+              timestamp TEXT
+            )
+          ''');
+        }
       },
     );
   }
+
+  // --- History Table ---
 
   Future<int> insertItem(HistoryItem item) async {
     final db = await database;
@@ -105,5 +133,44 @@ class HistoryService {
   Future<int> deleteItem(int id) async {
     final db = await database;
     return await db.delete(tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> updateItemTitle(int id, String newTitle) async {
+    final db = await database;
+    return await db.update(
+      tableName,
+      {'title': newTitle},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // --- URL History Table ---
+
+  Future<void> insertUrlHistory(String url, String title) async {
+    final db = await database;
+    await db.insert(
+      urlHistoryTable,
+      {
+        'url': url,
+        'title': title,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    // Maintain only top 10 most recent
+    final all = await db.query(urlHistoryTable, orderBy: 'timestamp DESC');
+    if (all.length > 10) {
+      final toDelete = all.sublist(10);
+      for (var row in toDelete) {
+        await db.delete(urlHistoryTable, where: 'url = ?', whereArgs: [row['url']]);
+      }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getUrlHistory() async {
+    final db = await database;
+    return await db.query(urlHistoryTable, orderBy: 'timestamp DESC');
   }
 }

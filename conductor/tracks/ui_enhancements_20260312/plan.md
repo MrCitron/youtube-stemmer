@@ -7,9 +7,9 @@
 - [x] Task: Conductor - User Manual Verification 'Smart Theming & Window Management' (Protocol in workflow.md)
 
 ## Phase 2: Database Extensions
-- [ ] Task: Update the SQLite schema to support a new `url_history` table (URL, Video Title, Timestamp).
-- [ ] Task: Implement a logic to store the 10 most recent *successful* processing URLs in the `url_history` table.
-- [ ] Task: Update the `history` table/model to ensure project titles are independently editable.
+- [x] Task: Update the SQLite schema to support a new `url_history` table (URL, Video Title, Timestamp).
+- [x] Task: Implement a logic to store the 10 most recent *successful* processing URLs in the `url_history` table.
+- [x] Task: Update the `history` table/model to ensure project titles are independently editable.
 - [ ] Task: Conductor - User Manual Verification 'Database Extensions' (Protocol in workflow.md)
 
 ## Phase 3: Smart URL Input UI
