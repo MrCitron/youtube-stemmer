@@ -16,6 +16,11 @@
 - **Solution:** `sqflite` (SQLite for Flutter)
 - **Role:** Persistent storage for track history, analyzed BPMs, and application state.
 
+## CI/CD Pipeline
+- **Solution:** GitHub Actions
+- **Role:** Automated build and release pipeline for Linux and macOS, triggered on version tags (`v*`). Handles cross-platform compilation, packaging, and asset uploads.
+- **Release Automation:** Automated GitHub Release creation with notes extracted from `CHANGELOG.md`.
+
 ## Audio & AI Libraries
 - **Source Separation:** HTDemucs (Facebook Research / Meta Demucs)
 - **Role:** The core engine for splitting audio tracks into high-quality stems.
