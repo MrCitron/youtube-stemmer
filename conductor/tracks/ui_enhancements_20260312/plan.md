@@ -1,10 +1,10 @@
 # Implementation Plan: ui_enhancements_20260312
 
-## Phase 1: Smart Theming & Window Management
+## Phase 1: Smart Theming & Window Management [checkpoint: ecdc7f7]
 - [x] Task: Implement "Auto" theme mode logic that follows system brightness.
 - [x] Task: Set "Auto" as the default theme in application state.
 - [x] Task: Implement and enforce a minimum window width (e.g., 600px) using `window_manager`.
-- [ ] Task: Conductor - User Manual Verification 'Smart Theming & Window Management' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Smart Theming & Window Management' (Protocol in workflow.md)
 
 ## Phase 2: Database Extensions
 - [ ] Task: Update the SQLite schema to support a new `url_history` table (URL, Video Title, Timestamp).
