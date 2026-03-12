@@ -1,5 +1,6 @@
 # YouTube Stemmer
 
+[![Build Status](https://github.com/MrCitron/youtube-stemmer/actions/workflows/build.yml/badge.svg)](https://github.com/MrCitron/youtube-stemmer/actions/workflows/build.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-Polyform_NonCommercial-red?style=for-the-badge)](LICENSE)
@@ -16,6 +17,14 @@ A high-performance, cross-platform desktop application for musicians. Retrieve a
 - **Project History:** Keep track of all your processed songs with persistent local storage.
 - **High Performance:** Core logic powered by a **Rust** backend and **ONNX Runtime** for fast, local inference.
 - **Privacy First:** All processing happens locally on your machine. No audio is ever uploaded to a server.
+
+## 🏁 Getting Started
+
+To start using YouTube Stemmer, download the latest version for your platform from the [GitHub Releases](https://github.com/MrCitron/youtube-stemmer/releases) page.
+
+1.  **Download:** Grab the `.tar.gz` (Linux) or `.zip` (macOS) for the latest release.
+2.  **Extract:** Unpack the archive to a folder of your choice.
+3.  **Run:** Launch the `youtube_stemmer` executable (Linux) or the `.app` bundle (macOS).
 
 ## 📖 Usage
 
