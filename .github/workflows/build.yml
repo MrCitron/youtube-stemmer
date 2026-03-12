@@ -2,7 +2,7 @@ name: Build & Package Desktop
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'fix/**', 'feat/**' ]
     paths:
       - 'backend/**'
       - 'frontend/**'
