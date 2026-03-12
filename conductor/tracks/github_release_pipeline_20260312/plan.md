@@ -23,6 +23,7 @@
 - [x] Task: Implement the asset upload step for built Linux and macOS packages.
 - [x] Task: Add the build status badge to the root `README.md`.
 - [x] Task: Update README.md 'Getting Started' section with download instructions.
+- [x] Task: Add macOS Gatekeeper instructions to README.md.
 - [ ] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
 
 ## Phase 5: Validation

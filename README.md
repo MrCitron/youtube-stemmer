@@ -26,6 +26,9 @@ To start using YouTube Stemmer, download the latest version for your platform fr
 2.  **Extract:** Unpack the archive to a folder of your choice.
 3.  **Run:** Launch the `youtube_stemmer` executable (Linux) or the `.app` bundle (macOS).
 
+> [!TIP]
+> **macOS Users:** See the [Troubleshooting](#macos-gatekeeper) section if you encounter security warnings when opening the app.
+
 ## 📖 Usage
 
 1.  **Enter URL:** Paste a YouTube link into the search bar and click **Process**.
@@ -67,6 +70,15 @@ To start using YouTube Stemmer, download the latest version for your platform fr
 - [Frontend Details](frontend/README.md) - Flutter UI architecture and dependencies.
 
 ## ❓ Troubleshooting
+
+### macOS Gatekeeper
+Since the application is not notarized by Apple, you may see a warning saying the app "cannot be opened because the developer cannot be verified" or "is from an unidentified developer."
+
+To authorize the application:
+1.  **Locate the app** in your Applications folder (or wherever you extracted it).
+2.  **Right-click** (or Control-click) the app icon and select **Open**.
+3.  A dialog will appear. Click **Open** again to confirm.
+4.  Alternatively, go to **System Settings > Privacy & Security** and scroll down to find the "Open Anyway" button for YouTube Stemmer.
 
 ### FFI / Shared Library Errors
 If the application fails to start or shows a "Library not found" error:
