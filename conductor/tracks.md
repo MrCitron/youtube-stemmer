@@ -17,8 +17,8 @@ This file tracks the high-level progress of the project.
 - [x] **Track: Persistent History**
 *Link: [./archive/persistent_history_20260308/](./archive/persistent_history_20260308/)*
 
-- [ ] **Track: Rust Backend Migration (PAUSED)**
-*Link: [./tracks/rust_backend_migration_20260308/](./tracks/rust_backend_migration_20260308/)*
+- [x] **Track: Rust Backend Migration**
+*Link: [./archive/rust_backend_migration_20260308/](./archive/rust_backend_migration_20260308/)*
 
 - [x] **Track: UI Visual Revamp**
 *Link: [./archive/ui_visual_revamp_20260308/](./archive/ui_visual_revamp_20260308/)*
@@ -26,8 +26,8 @@ This file tracks the high-level progress of the project.
 - [x] **Track: Branding & Identity Migration**
 *Link: [./archive/branding_migration_20260310/](./archive/branding_migration_20260310/)*
 
-- [x] **Track: Pro Mixer - [ ] **Track: Pro Mixer & Control Flow** (IN PROGRESS) Control Flow**
-*Link: [./archive/pro_mixer_and_cancellation_20260310/](./tracks/pro_mixer_and_cancellation_20260310/)*
+- [x] **Track: Pro Mixer & Control Flow**
+*Link: [./archive/pro_mixer_and_cancellation_20260310/](./archive/pro_mixer_and_cancellation_20260310/)*
 
 - [x] **Track: Smart Metronome System**
 *Link: [./archive/smart_metronome_system_20260310/](./archive/smart_metronome_system_20260310/)*
