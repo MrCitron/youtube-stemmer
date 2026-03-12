@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# If click_gen.rs is staged, regenerate the click WAV assets and stage them
+# so they are included in the same commit.
+
+if git diff --cached --name-only | grep -q "backend/src/click_gen.rs"; then
+  echo "pre-commit: click_gen.rs changed — regenerating click assets..."
+
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+  (cd "$REPO_ROOT/backend" && cargo test test_generate_click -- --nocapture 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "pre-commit: failed to regenerate click assets — aborting commit." >&2
+    exit 1
+  fi
+
+  git add \
+    "$REPO_ROOT/frontend/assets/click.wav" \
+    "$REPO_ROOT/frontend/assets/click_down.wav"
+
+  echo "pre-commit: click.wav and click_down.wav regenerated and staged."
+fi

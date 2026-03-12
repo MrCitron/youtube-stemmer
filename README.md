@@ -64,6 +64,16 @@ To start using YouTube Stemmer, download the latest version for your platform fr
 > [!IMPORTANT]
 > Detailed build instructions for all platforms (Windows, macOS, Linux, Android, iOS) can be found in [BUILD.md](BUILD.md).
 
+### Git hooks
+
+A pre-commit hook is provided in `.githooks/`. It automatically regenerates `click.wav` and `click_down.wav` whenever `backend/src/click_gen.rs` is staged, so the committed assets always match the source.
+
+Enable it once after cloning:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## 📚 Documentation
 
 - [Build Guide](BUILD.md) - Environment setup and compilation steps.
