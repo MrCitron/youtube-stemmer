@@ -129,14 +129,27 @@ jobs:
       - name: Extract Release Notes
         id: extract_notes
         run: |
-          # Extract text between the first and second ## [ version header
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          # Use sed to get content between first and second H2 headers
-          # This assumes version headers are ## [x.y.z]
-          NOTES=$(sed -n "/^## \[$TAG_VERSION\]/,/^## \[/p" CHANGELOG.md | sed '1d;$d')
+          # Extract from the matching version header down to the next H2 header (or EOF)
+          # We search for ## [version] and stop at the next ## [
+          # Then we remove the first line (the header itself)
+          sed -n "/^## \[$TAG_VERSION\]/,/^## \[/p" CHANGELOG.md > raw_notes.md
+          
+          # If the last line is the next version header, remove it
+          if grep -q "^## \[" <<< "$(tail -n 1 raw_notes.md)" && [[ $(wc -l < raw_notes.md) -gt 1 ]]; then
+            head -n -1 raw_notes.md > filtered_notes.md
+          else
+            cat raw_notes.md > filtered_notes.md
+          fi
+          
+          # Remove the first line (the version header itself)
+          tail -n +2 filtered_notes.md > final_notes.md
+          
+          NOTES=$(cat final_notes.md)
           if [ -z "$NOTES" ]; then
             NOTES="Release notes for $TAG_VERSION"
           fi
+          
           # Handle multi-line output for GITHUB_OUTPUT
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
