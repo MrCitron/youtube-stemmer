@@ -429,26 +429,28 @@ class _StemPlayerState extends State<StemPlayer> {
 
     return Column(
       children: [
-        // Title
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: Text(
-            widget.videoTitle,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-
-        // Player Controls Section
+        // Player Controls Card (Timeline, Playback buttons)
         Card(
           elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
+                // Title
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    widget.videoTitle,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 // Timeline
                 Row(
                   children: [
@@ -456,7 +458,7 @@ class _StemPlayerState extends State<StemPlayer> {
                       width: 45,
                       child: Text(
                         _formatDuration(_position),
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.grey),
                       ),
                     ),
                     Expanded(
@@ -466,7 +468,7 @@ class _StemPlayerState extends State<StemPlayer> {
                           thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
                           overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
                           activeTrackColor: Theme.of(context).colorScheme.primary,
-                          inactiveTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          inactiveTrackColor: Theme.of(context).colorScheme.surface,
                         ),
                         child: Slider(
                           value: _position.inMilliseconds.toDouble().clamp(0, _duration.inMilliseconds.toDouble()),
@@ -481,39 +483,58 @@ class _StemPlayerState extends State<StemPlayer> {
                       child: Text(
                         _formatDuration(_duration),
                         textAlign: TextAlign.end,
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.grey),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 // Playback Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconButton.filledTonal(
-                      icon: const Icon(Icons.replay_10),
+                    IconButton(
+                      icon: const Icon(Icons.replay_10, size: 32),
                       onPressed: _skipBack,
                       tooltip: 'Back 10s',
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     ),
                     const SizedBox(width: 16),
-                    IconButton.filledTonal(
-                      icon: const Icon(Icons.stop_rounded),
+                    IconButton(
+                      icon: const Icon(Icons.stop_circle_outlined, size: 32),
                       onPressed: _stop,
                       tooltip: 'Stop',
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     ),
                     const SizedBox(width: 16),
-                    IconButton.filled(
-                      icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
-                      iconSize: 40,
-                      onPressed: _togglePlay,
-                      tooltip: _isPlaying ? 'Pause' : 'Play',
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                        iconSize: 40,
+                        color: Colors.white,
+                        onPressed: _togglePlay,
+                        tooltip: _isPlaying ? 'Pause' : 'Play',
+                      ),
                     ),
                     const SizedBox(width: 16),
-                    IconButton.filledTonal(
-                      icon: const Icon(Icons.forward_10),
+                    IconButton(
+                      icon: const Icon(Icons.forward_10, size: 32),
                       onPressed: _skipForward,
                       tooltip: 'Forward 10s',
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     ),
                   ],
                 ),
@@ -523,70 +544,101 @@ class _StemPlayerState extends State<StemPlayer> {
         ),
 
         const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // BPM Display & Override
-            InkWell(
-              onTap: _showBpmEditor,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${_bpm.toStringAsFixed(0)}',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.amber, fontFamily: 'monospace', height: 1.0),
-                    ),
-                    const Text(
-                      'BPM',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.amber),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-            // Metronome & Count-in Switches
-            _buildControlToggle(
-              icon: Icons.av_timer,
-              label: 'METRONOME',
-              isSelected: _metronomeEnabled,
-              enabled: !Platform.isLinux,
-              onTap: () {
-                setState(() => _metronomeEnabled = !_metronomeEnabled);
-                if (_metronomeEnabled) {
-                  if (_isPlaying) _metronomeService.start();
-                } else {
-                  _metronomeService.stop();
-                }
-              },
-            ),
-            const SizedBox(width: 12),
-            _buildControlToggle(
-              icon: Icons.more_time_rounded,
-              label: 'COUNT-IN',
-              isSelected: _countInEnabled,
-              enabled: !Platform.isLinux,
-              onTap: () => setState(() => _countInEnabled = !_countInEnabled),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
+
         Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            'STUDIO MIXER',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 2,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              'METRONOME',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        // Metronome Card
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // BPM Display & Override
+                InkWell(
+                  onTap: _showBpmEditor,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${_bpm.toStringAsFixed(0)}',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.amber, fontFamily: 'monospace', height: 1.0),
+                        ),
+                        const Text(
+                          'BPM',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.amber),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                // Metronome & Count-in Switches
+                _buildControlToggle(
+                  icon: Icons.av_timer,
+                  label: 'METRONOME',
+                  isSelected: _metronomeEnabled,
+                  enabled: !Platform.isLinux,
+                  onTap: () {
+                    setState(() => _metronomeEnabled = !_metronomeEnabled);
+                    if (_metronomeEnabled) {
+                      if (_isPlaying) _metronomeService.start();
+                    } else {
+                      _metronomeService.stop();
+                    }
+                  },
+                ),
+                const SizedBox(width: 12),
+                _buildControlToggle(
+                  icon: Icons.more_time_rounded,
+                  label: 'COUNT-IN',
+                  isSelected: _countInEnabled,
+                  enabled: !Platform.isLinux,
+                  onTap: () => setState(() => _countInEnabled = !_countInEnabled),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              'MIXER',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                letterSpacing: 2,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
 
         // Studio Mixer (Grid of vertical lanes)
         LayoutBuilder(
@@ -595,36 +647,45 @@ class _StemPlayerState extends State<StemPlayer> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: widget.stemNames.map((stem) {
                 final hasFile = _players.containsKey(stem);
-                final volume = _players[stem]?.volume ?? 1.0;
+                final isMuted = (_userVolumes[stem] ?? 1.0) == 0;
+                final isSoloed = _soloedStems.contains(stem);
+                
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
                       ),
                       child: Column(
                         children: [
                           Text(
                             stem.toUpperCase(),
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold, 
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                              letterSpacing: 1.2,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           SizedBox(
                             height: 160,
                             child: RotatedBox(
                               quarterTurns: 3,
                               child: SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
-                                  trackHeight: 10,
-                                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                                  activeTrackColor: _soloedStems.isNotEmpty && !_soloedStems.contains(stem)
-                                      ? Colors.grey.withOpacity(0.3)
+                                  trackHeight: 12,
+                                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                                  activeTrackColor: _soloedStems.isNotEmpty && !isSoloed
+                                      ? Colors.grey.withOpacity(0.2)
                                       : Theme.of(context).colorScheme.primary,
-                                  inactiveTrackColor: Theme.of(context).colorScheme.surface,
+                                  inactiveTrackColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                  thumbColor: Theme.of(context).colorScheme.primary,
                                 ),
                                 child: Slider(
                                   value: _userVolumes[stem] ?? 1.0,
@@ -633,30 +694,43 @@ class _StemPlayerState extends State<StemPlayer> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 12),
+                          Column(
                             children: [
                               IconButton(
-                                icon: const Text('M', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                                onPressed: hasFile ? () => _setVolume(stem, (_userVolumes[stem] ?? 1.0) == 0 ? 1.0 : 0.0) : null,
-                                style: IconButton.styleFrom(
-                                  minimumSize: const Size(28, 28),
-                                  padding: EdgeInsets.zero,
-                                  backgroundColor: (_userVolumes[stem] ?? 1.0) == 0 ? Colors.red.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
-                                  foregroundColor: (_userVolumes[stem] ?? 1.0) == 0 ? Colors.red : Colors.grey,
+                                icon: Icon(
+                                  isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                                  size: 18,
                                 ),
+                                onPressed: hasFile ? () => _setVolume(stem, isMuted ? 1.0 : 0.0) : null,
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size(36, 36),
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: isMuted 
+                                      ? Colors.red.withOpacity(0.2) 
+                                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                  foregroundColor: isMuted ? Colors.red : Colors.grey,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                tooltip: 'Mute',
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(height: 8),
                               IconButton(
-                                icon: const Text('S', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                icon: Icon(
+                                  isSoloed ? Icons.headphones_rounded : Icons.headphones_outlined,
+                                  size: 18,
+                                ),
                                 onPressed: hasFile ? () => _toggleSolo(stem) : null,
                                 style: IconButton.styleFrom(
-                                  minimumSize: const Size(28, 28),
+                                  minimumSize: const Size(36, 36),
                                   padding: EdgeInsets.zero,
-                                  backgroundColor: _soloedStems.contains(stem) ? Colors.amber.withOpacity(0.2) : Theme.of(context).colorScheme.surface,
-                                  foregroundColor: _soloedStems.contains(stem) ? Colors.amber : Colors.grey,
+                                  backgroundColor: isSoloed 
+                                      ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
+                                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                  foregroundColor: isSoloed ? Theme.of(context).colorScheme.primary : Colors.grey,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
+                                tooltip: 'Solo',
                               ),
                             ],
                           ),
@@ -670,7 +744,8 @@ class _StemPlayerState extends State<StemPlayer> {
           }
         ),
 
-        const Divider(height: 48),
+        const SizedBox(height: 32),
+        // Export Section
         ExportUI(
           stemVolumes: _players.map((k, v) => MapEntry(k, v.volume)),
           onExportZip: _handleExportZip,
