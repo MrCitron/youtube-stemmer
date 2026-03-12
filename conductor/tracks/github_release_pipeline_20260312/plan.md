@@ -26,7 +26,7 @@
 - [x] Task: Add macOS Gatekeeper instructions to README.md.
 - [x] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
 
-## Phase 5: Validation
+## Phase 5: Validation [checkpoint: 6f29561]
 - [x] Task: Perform a test release by pushing a dummy version tag.
 - [x] Task: Verify the release notes and attached assets on the GitHub Release page.
 - [x] Task: Troubleshoot macOS build failure (sqlite3 hash mismatch).
