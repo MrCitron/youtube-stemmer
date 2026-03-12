@@ -16,13 +16,13 @@ A portable, cross-platform application designed for musicians to retrieve and sp
 ## Core Features
 1. **Streaming Integration (Audio Retrieval):** Efficiently retrieve audio from YouTube (with planned expansion to Deezer) using the user's own subscriptions. **Note:** The purpose is not to download or distribute music, but to enable track splitting for personal study.
 2. **Local Audio Stemming (AI Source Separation):** Split audio into high-quality stems (vocals, drums, bass, and other) using local AI models like HTDemucs.
-3. **Multi-track Audio Player (Mixer):** A dedicated player that allows users to mute or solo specific tracks in real-time for a tailored practice session.
+3. **Multi-track Audio Player (Mixer):** A dedicated player that allows users to mute or solo specific tracks in real-time for a tailored practice session. Includes a **Smart Metronome** with automatic tempo analysis and count-in support.
 4. **Audio Export:** Export separated stems or custom mixes in common formats (WAV/MP3) for personal use and study in other software.
 5. **Portable Distribution:** Distribution as self-contained archives for Linux, Windows, and macOS, with automatic AI model downloading to ensure a smooth first-run experience.
 
 ## Platform and Technology
 - **Framework:** Flutter (for portable native application on Desktop and Mobile).
-- **Processing:** Self-contained architecture using a Go-based core compiled as a shared library, integrated via FFI for maximum portability and minimal system dependencies.
+- **Processing:** Self-contained architecture using a **Rust-based** core compiled as a shared library, integrated via FFI for maximum portability and minimal system dependencies.
 
 ## Primary Value
 As a **Comprehensive Practice Tool**, the application provides musicians with the ultimate flexibility to either isolate a track for study or remove it to create a personalized backing track, all within a single, user-friendly interface.

@@ -5,12 +5,12 @@
 - [x] Task: Expose the estimated BPM via a new FFI function `GetEstimatedBPM`.
 
 ## Phase 2: Metronome Service (Frontend)
-- [~] Task: Create a `MetronomeService` in Dart to handle click sound playback.
-- [~] Task: Implement precise timing for metronome clicks based on a target BPM.
+- [x] Task: Create a `MetronomeService` in Dart to handle click sound playback.
+- [x] Task: Implement precise timing for metronome clicks based on a target BPM.
 
 ## Phase 3: Count-in Logic
-- [~] Task: Implement count-in functionality (4 beats) before playback starts.
-- [~] Task: Coordinate the count-in with the `StemPlayer`'s audio initialization.
+- [x] Task: Implement count-in functionality (4 beats) before playback starts.
+- [x] Task: Coordinate the count-in with the `StemPlayer`'s audio initialization.
 
 ## Phase 4: UI Integration & Manual Override
 - [x] Task: Update `StemPlayer` UI to display the analyzed BPM.
@@ -18,5 +18,5 @@
 - [x] Task: Add toggles for 'Metronome' and 'Count-in' features in the player controls.
 
 ## Phase 5: Validation
-- [ ] Task: Verify BPM analysis accuracy and manual override functionality.
-- [ ] Task: Ensure metronome and count-in are audible and correctly timed.
+- [x] Task: Verify BPM analysis accuracy and manual override functionality.
+- [x] Task: Ensure metronome and count-in are audible and correctly timed (Validated on macOS; Linux audio issue to be addressed in a future track).
