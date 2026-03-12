@@ -6,7 +6,7 @@
 - [x] Task: Configure the job matrix for Linux and macOS environments.
 - [x] Task: Conductor - User Manual Verification 'Pipeline Infrastructure' (Protocol in workflow.md)
 
-## Phase 2: Linux Build & Package
+## Phase 2: Linux Build & Package [checkpoint: 325a2de]
 - [x] Task: Implement Rust backend build step for Linux.
 - [x] Task: Implement Flutter frontend build step for Linux.
 - [x] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
