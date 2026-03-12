@@ -2,16 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0] - 2026-03-12
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Added
-- **GitHub Release Pipeline:** Automated builds for Linux and macOS.
-- **Smart Metronome (Alpha):** Automatic BPM estimation and synchronized click track. *Note: Metronome audio is currently non-functional on Linux.*
-- **Rust Backend:** High-performance audio engine and AI inference.
-- **Studio Mixer:** Multi-track player with solo/mute controls.
-- **Persistent History:** Save and load processed tracks via SQLite.
-- **Documentation:** Comprehensive README, BUILD, and LICENSE files.
-- **macOS Authorization:** Detailed Gatekeeper instructions in README.
+## [0.1.0] - Initial Release [Unreleased]
 
-### Fixed
-- **macOS Build:** Resolved `sqlite3` hash mismatch by pinning version `3.1.7`.
+### Features
+- **On-Device AI Audio Separation:** High-fidelity extraction of vocals, drums, bass, and other instruments using the HTDemucs model. **All processing is performed locally on your device**, ensuring total privacy and allowing for offline use.
+- **YouTube Integration:** Direct audio retrieval from YouTube URLs for personal practice and study.
+- **Studio Mixer:** Multi-track player with real-time Solo/Mute controls and volume adjustment.
+- **Smart Metronome (Alpha):** Automatic BPM estimation and synchronized click track with count-in support. *(Note: Metronome audio is currently non-functional on Linux).*
+- **Persistent Project History:** Save and resume your stemming projects with local SQLite storage.
+- **Cross-Platform Support:** High-performance desktop application available for Linux and macOS, powered by a native Rust backend.
