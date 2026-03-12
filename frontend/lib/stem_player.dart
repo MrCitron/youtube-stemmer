@@ -15,6 +15,7 @@ class StemPlayer extends StatefulWidget {
   final List<String> stemNames;
   final Map<String, String> stemFiles;
   final double? initialBpm;
+  final Function(String)? onTitleChanged;
 
   const StemPlayer({
     super.key,
@@ -23,6 +24,7 @@ class StemPlayer extends StatefulWidget {
     required this.stemNames,
     required this.stemFiles,
     this.initialBpm,
+    this.onTitleChanged,
   });
 
   @override
@@ -43,11 +45,14 @@ class _StemPlayerState extends State<StemPlayer> {
   bool _countInEnabled = false;
   final _metronomeService = MetronomeService();
   Timer? _syncTimer;
+  late TextEditingController _titleController;
+  bool _isEditingTitle = false;
 
   @override
   void initState() {
     super.initState();
     _bpm = widget.initialBpm ?? 120.0;
+    _titleController = TextEditingController(text: widget.videoTitle);
     _initPlayers();
     _initMetronome();
   }
@@ -68,6 +73,9 @@ class _StemPlayerState extends State<StemPlayer> {
       _bpm = widget.initialBpm ?? 120.0;
       _metronomeService.bpm = _bpm;
       if (mounted) setState(() {});
+    }
+    if (oldWidget.videoTitle != widget.videoTitle) {
+      _titleController.text = widget.videoTitle;
     }
   }
 
@@ -443,13 +451,45 @@ class _StemPlayerState extends State<StemPlayer> {
                 // Title
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    widget.videoTitle,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: _isEditingTitle
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 300,
+                              child: TextField(
+                                controller: _titleController,
+                                autofocus: true,
+                                textAlign: TextAlign.center,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                ),
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                onSubmitted: (val) {
+                                  if (val.isNotEmpty) {
+                                    setState(() => _isEditingTitle = false);
+                                    widget.onTitleChanged?.call(val);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                      : InkWell(
+                          onTap: () => setState(() => _isEditingTitle = true),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
+                            child: Text(
+                              widget.videoTitle,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
                 ),
                 // Timeline
                 Row(

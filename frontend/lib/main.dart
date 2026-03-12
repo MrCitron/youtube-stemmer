@@ -234,6 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String>? _stemNames;
   Map<String, String>? _stemFiles;
   double? _bpm;
+  int? _currentHistoryId;
 
   double _downloadProgress = 0;
   double _stemmingProgress = 0;
@@ -488,21 +489,8 @@ class _MyHomePageState extends State<MyHomePage> {
               LogService().warn('BPM analysis error: $e');
             }
 
-            setState(() {
-              _stemsDirectory = outputDir;
-              _stemNames = _selectedModel.stemNames;
-              _stemFiles = stemFiles;
-              _bpm = estimatedBpm;
-              _stemmingProgress = 1.0;
-            });
-            LogService().info('Stemming complete. Saved to: $outputDir');
-            
-            // Save URL to history
-            await HistoryService().insertUrlHistory(url, title);
-            _loadUrlHistory();
-
             // Save to History
-            await HistoryService().insertItem(HistoryItem(
+            final newItem = HistoryItem(
               title: title,
               url: url,
               directory: outputDir,
@@ -510,8 +498,17 @@ class _MyHomePageState extends State<MyHomePage> {
               stemFiles: stemFiles,
               bpm: estimatedBpm,
               createdAt: DateTime.now(),
-            ));
+            );
+            final id = await HistoryService().insertItem(newItem);
 
+            setState(() {
+              _stemsDirectory = outputDir;
+              _stemNames = _selectedModel.stemNames;
+              _stemFiles = stemFiles;
+              _bpm = estimatedBpm;
+              _stemmingProgress = 1.0;
+              _currentHistoryId = id;
+            });
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Processing complete and saved to history!')),
@@ -609,7 +606,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (mounted) setState(() => _bpm = detectedBpm);
 
       // Save to History (local import)
-      await HistoryService().insertItem(HistoryItem(
+      final id = await HistoryService().insertItem(HistoryItem(
         title: _videoTitle!,
         url: 'local:${selectedDirectory}',
         directory: selectedDirectory,
@@ -619,11 +616,28 @@ class _MyHomePageState extends State<MyHomePage> {
         createdAt: DateTime.now(),
       ));
 
+      setState(() {
+        _currentHistoryId = id;
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Loaded ${foundStems.length} stems from: $_videoTitle')),
         );
       }
+    }
+  }
+
+  void _handleTitleChanged(String newTitle) async {
+    if (_currentHistoryId != null) {
+      await HistoryService().updateItemTitle(_currentHistoryId!, newTitle);
+      setState(() {
+        _videoTitle = newTitle;
+      });
+    } else {
+      setState(() {
+        _videoTitle = newTitle;
+      });
     }
   }
 
@@ -634,6 +648,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _stemNames = item.stemNames;
       _stemFiles = item.stemFiles;
       _bpm = item.bpm;
+      _currentHistoryId = item.id;
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -910,6 +925,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   stemNames: _stemNames ?? ['drums', 'bass', 'other', 'vocals'],
                   stemFiles: _stemFiles ?? { for (var s in ['drums', 'bass', 'other', 'vocals']) s : "$s.wav" },
                   initialBpm: _bpm,
+                  onTitleChanged: _handleTitleChanged,
                 ),
               ],
             ],
