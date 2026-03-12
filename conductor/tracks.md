@@ -30,7 +30,7 @@ This file tracks the high-level progress of the project.
 *Link: [./archive/pro_mixer_and_cancellation_20260310/](./tracks/pro_mixer_and_cancellation_20260310/)*
 
 - [x] **Track: Smart Metronome System**
-*Link: [./tracks/smart_metronome_system_20260310/](./tracks/smart_metronome_system_20260310/)*
+*Link: [./archive/smart_metronome_system_20260310/](./archive/smart_metronome_system_20260310/)*
 
 - [ ] **Track: Audio Loopback Recording (CANCELLED)**
 *Link: [./archive/cancelled_audio_loopback_recording_20260308/](./archive/cancelled_audio_loopback_recording_20260308/)*
