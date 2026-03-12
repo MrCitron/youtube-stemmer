@@ -11,7 +11,7 @@ A high-performance, cross-platform desktop application for musicians. Retrieve a
 ## 🚀 Features
 
 - **AI Source Separation:** Isolate vocals, drums, bass, and other instruments with high fidelity using the **HTDemucs** model.
-- **Smart Metronome:** Automatic BPM estimation and a synchronized metronome with count-in support.
+- **Smart Metronome (Alpha):** Automatic BPM estimation and a synchronized metronome with count-in support. *Note: Metronome audio is currently non-functional on Linux.*
 - **Studio Mixer:** Multi-track player with real-time Solo/Mute logic and volume controls.
 - **Project History:** Keep track of all your processed songs with persistent local storage.
 - **High Performance:** Core logic powered by a **Rust** backend and **ONNX Runtime** for fast, local inference.
@@ -65,7 +65,7 @@ If the application fails to start or shows a "Library not found" error:
 - On macOS, ensure the libraries are correctly embedded and signed in Xcode.
 
 ### AI Model Issues
-The first time you run the application, it will download the AI models (approx. 80MB).
+The first time you run the application, it will download the AI models (approx. 300MB).
 - Ensure you have an active internet connection.
 - If the download fails, check the logs for specific network errors.
 
