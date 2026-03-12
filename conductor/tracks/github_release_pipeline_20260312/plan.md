@@ -24,10 +24,11 @@
 - [x] Task: Add the build status badge to the root `README.md`.
 - [x] Task: Update README.md 'Getting Started' section with download instructions.
 - [x] Task: Add macOS Gatekeeper instructions to README.md.
-- [ ] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
 
 ## Phase 5: Validation
-- [ ] Task: Perform a test release by pushing a dummy version tag.
-- [ ] Task: Verify the release notes and attached assets on the GitHub Release page.
-- [ ] Task: Verify the build status badge in `README.md`.
+- [x] Task: Perform a test release by pushing a dummy version tag.
+- [x] Task: Verify the release notes and attached assets on the GitHub Release page.
+- [x] Task: Troubleshoot macOS build failure (sqlite3 hash mismatch).
+- [x] Task: Verify the build status badge in `README.md`.
 - [ ] Task: Conductor - User Manual Verification 'Validation' (Protocol in workflow.md)
