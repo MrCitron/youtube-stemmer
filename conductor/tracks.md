@@ -36,4 +36,4 @@ This file tracks the high-level progress of the project.
 *Link: [./archive/cancelled_audio_loopback_recording_20260308/](./archive/cancelled_audio_loopback_recording_20260308/)*
 
 - [x] **Track: Comprehensive Documentation**
-*Link: [./tracks/comprehensive_documentation_20260308/](./tracks/comprehensive_documentation_20260308/)*
+*Link: [./archive/comprehensive_documentation_20260308/](./archive/comprehensive_documentation_20260308/)*

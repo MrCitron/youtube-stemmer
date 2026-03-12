@@ -15,5 +15,5 @@
 - [x] Task: Document common troubleshooting steps (e.g., FFI loading errors).
 
 ## Phase 4: Validation
-- [ ] Task: Review all documentation for clarity and completeness.
-- [ ] Task: Verify that all links and commands are correct.
+- [x] Task: Review all documentation for clarity and completeness.
+- [x] Task: Verify that all links and commands are correct.
