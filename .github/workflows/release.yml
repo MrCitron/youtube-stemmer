@@ -129,7 +129,7 @@ jobs:
       - name: Extract Release Notes
         id: extract_notes
         run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
           # Use awk to extract the section for the specific tag
           # It finds the line starting with ## [TAG_VERSION] and prints until the next ## [
           NOTES=$(awk "/^## \[$TAG_VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
