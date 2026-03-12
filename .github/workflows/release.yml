@@ -130,22 +130,10 @@ jobs:
         id: extract_notes
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          # Extract from the matching version header down to the next H2 header (or EOF)
-          # We search for ## [version] and stop at the next ## [
-          # Then we remove the first line (the header itself)
-          sed -n "/^## \[$TAG_VERSION\]/,/^## \[/p" CHANGELOG.md > raw_notes.md
+          # Use awk to extract the section for the specific tag
+          # It finds the line starting with ## [TAG_VERSION] and prints until the next ## [
+          NOTES=$(awk "/^## \[$TAG_VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
           
-          # If the last line is the next version header, remove it
-          if grep -q "^## \[" <<< "$(tail -n 1 raw_notes.md)" && [[ $(wc -l < raw_notes.md) -gt 1 ]]; then
-            head -n -1 raw_notes.md > filtered_notes.md
-          else
-            cat raw_notes.md > filtered_notes.md
-          fi
-          
-          # Remove the first line (the version header itself)
-          tail -n +2 filtered_notes.md > final_notes.md
-          
-          NOTES=$(cat final_notes.md)
           if [ -z "$NOTES" ]; then
             NOTES="Release notes for $TAG_VERSION"
           fi

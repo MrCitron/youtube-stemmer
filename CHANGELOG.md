@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.1-alpha.6] - 2026-03-12
+
+### Added
+- **Changelog Support:** Release notes are now robustly extracted from `CHANGELOG.md` using `awk`.
+
+## [0.0.1-alpha.5] - 2026-03-12
+
+### Added
+- **Changelog Support:** Release notes are now extracted from `CHANGELOG.md`.
+
 ## [0.0.1-alpha.4] - 2026-03-12
 
 ### Added
