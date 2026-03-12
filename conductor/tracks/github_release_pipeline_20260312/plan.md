@@ -10,18 +10,19 @@
 - [x] Task: Implement Rust backend build step for Linux.
 - [x] Task: Implement Flutter frontend build step for Linux.
 - [x] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
-- [ ] Task: Conductor - User Manual Verification 'Linux Build & Package' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Linux Build & Package' (Protocol in workflow.md)
 
 ## Phase 3: macOS Build & Package
-- [ ] Task: Implement Rust backend build step for macOS (Universal Binary).
-- [ ] Task: Implement Flutter frontend build step for macOS.
-- [ ] Task: Implement packaging logic (e.g., zip) for macOS assets.
+- [x] Task: Implement Rust backend build step for macOS (Universal Binary).
+- [x] Task: Implement Flutter frontend build step for macOS.
+- [x] Task: Implement packaging logic (e.g., zip) for macOS assets.
 - [ ] Task: Conductor - User Manual Verification 'macOS Build & Package' (Protocol in workflow.md)
 
 ## Phase 4: Release & Documentation
 - [ ] Task: Implement the GitHub Release creation step with auto-generated notes.
 - [ ] Task: Implement the asset upload step for built Linux and macOS packages.
 - [ ] Task: Add the build status badge to the root `README.md`.
+- [ ] Task: Update README.md 'Getting Started' section with download instructions.
 - [ ] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
 
 ## Phase 5: Validation
