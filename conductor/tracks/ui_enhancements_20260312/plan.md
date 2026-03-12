@@ -13,9 +13,9 @@
 - [x] Task: Conductor - User Manual Verification 'Database Extensions' (Protocol in workflow.md)
 
 ## Phase 3: Smart URL Input UI
-- [ ] Task: Redesign the URL input field to trigger a dropdown on focus/click.
-- [ ] Task: Implement the dropdown UI showing the last 10 successful URLs with their titles.
-- [ ] Task: Integrate selection logic to auto-fill the URL and start processing if desired.
+- [x] Task: Redesign the URL input field to trigger a dropdown on focus/click.
+- [x] Task: Implement the dropdown UI showing the last 10 successful URLs with their titles.
+- [x] Task: Integrate selection logic to auto-fill the URL and start processing if desired.
 - [ ] Task: Conductor - User Manual Verification 'Smart URL Input UI' (Protocol in workflow.md)
 
 ## Phase 4: Mixer UI Overhaul (Mockup Alignment)

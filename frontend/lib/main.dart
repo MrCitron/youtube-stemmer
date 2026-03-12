@@ -223,15 +223,27 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _downloadEta;
   String? _stemmingEta;
 
+  List<Map<String, dynamic>> _urlHistory = [];
+
   AppModel _selectedModel = availableModels.first;
 
   @override
   void initState() {
     super.initState();
+    _loadUrlHistory();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkModel(_selectedModel);
       _urlFocusNode.requestFocus();
     });
+  }
+
+  Future<void> _loadUrlHistory() async {
+    final history = await HistoryService().getUrlHistory();
+    if (mounted) {
+      setState(() {
+        _urlHistory = history;
+      });
+    }
   }
 
   Future<bool> _checkModel(AppModel model) async {
@@ -469,7 +481,8 @@ class _MyHomePageState extends State<MyHomePage> {
             LogService().info('Stemming complete. Saved to: $outputDir');
             
             // Save URL to history
-            HistoryService().insertUrlHistory(url, title);
+            await HistoryService().insertUrlHistory(url, title);
+            _loadUrlHistory();
 
             // Save to History
             await HistoryService().insertItem(HistoryItem(
@@ -727,21 +740,71 @@ class _MyHomePageState extends State<MyHomePage> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      TextField(
-                        controller: _urlController,
-                        focusNode: _urlFocusNode,
-                        decoration: InputDecoration(
-                          hintText: 'Paste YouTube URL here...',
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                          prefixIcon: const Icon(Icons.link, size: 20),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                        enabled: !_isProcessing,
+                      RawAutocomplete<Map<String, dynamic>>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          return _urlHistory.where((Map<String, dynamic> option) {
+                            return option['url'].toString().toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                                option['title'].toString().toLowerCase().contains(textEditingValue.text.toLowerCase());
+                          });
+                        },
+                        displayStringForOption: (Map<String, dynamic> option) => option['url'],
+                        fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                          // Synchronize external controller with autocomplete controller
+                          textEditingController.text = _urlController.text;
+                          textEditingController.addListener(() {
+                            _urlController.text = textEditingController.text;
+                          });
+
+                          return TextField(
+                            controller: textEditingController,
+                            focusNode: focusNode,
+                            decoration: InputDecoration(
+                              hintText: 'Paste YouTube URL here...',
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              prefixIcon: const Icon(Icons.link, size: 20),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            ),
+                            enabled: !_isProcessing,
+                            onSubmitted: (_) => _processUrl(),
+                          );
+                        },
+                        optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<Map<String, dynamic>> onSelected, Iterable<Map<String, dynamic>> options) {
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              elevation: 4.0,
+                              borderRadius: BorderRadius.circular(12),
+                              color: Theme.of(context).colorScheme.surface,
+                              child: Container(
+                                width: 500, // Reasonable width for dropdown
+                                constraints: const BoxConstraints(maxHeight: 300),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(8.0),
+                                  shrinkWrap: true,
+                                  itemCount: options.length,
+                                  itemBuilder: (BuildContext context, int index) {
+                                    final Map<String, dynamic> option = options.elementAt(index);
+                                    return ListTile(
+                                      title: Text(option['title'] ?? 'Unknown Title', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      subtitle: Text(option['url'], style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      onTap: () {
+                                        onSelected(option);
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        onSelected: (Map<String, dynamic> selection) {
+                          _urlController.text = selection['url'];
+                        },
                       ),
                       const SizedBox(height: 16),
                       Row(
