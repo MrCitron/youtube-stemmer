@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'history_service.dart';
 import 'dart:io';
-import 'package:path/path.dart' as p;
 
 class HistoryScreen extends StatefulWidget {
   final Function(HistoryItem) onSelect;
@@ -26,25 +25,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadHistory() async {
-    final items = await _historyService.getAllItems();
-    final sizes = <int, String>{};
-    int totalBytes = 0;
+    try {
+      final items = await _historyService.getAllItems();
+      final sizes = <int, String>{};
+      int totalBytes = 0;
 
-    for (var item in items) {
-      if (item.id != null) {
-        final bytes = await _getDirSize(item.directory);
-        sizes[item.id!] = _formatBytes(bytes);
-        totalBytes += bytes;
+      for (var item in items) {
+        if (item.id != null) {
+          final bytes = await _getDirSize(item.directory);
+          sizes[item.id!] = _formatBytes(bytes);
+          totalBytes += bytes;
+        }
       }
-    }
 
-    if (mounted) {
-      setState(() {
-        _items = items;
-        _itemSizes = sizes;
-        _totalSize = _formatBytes(totalBytes);
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _items = items;
+          _itemSizes = sizes;
+          _totalSize = _formatBytes(totalBytes);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading history: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
