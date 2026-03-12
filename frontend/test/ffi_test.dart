@@ -22,6 +22,7 @@ void main() {
     const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Rickroll
     try {
       final metadata = backend.getMetadata(url);
+      // ignore: avoid_print
       print('Metadata: $metadata');
       expect(metadata, contains('Rick Astley'));
       expect(metadata, contains('Never Gonna Give You Up'));
@@ -35,6 +36,7 @@ void main() {
     final inputPath = p.join(projectRoot, 'backend_go_legacy', 'test_input.wav');
     try {
       final bpmStr = backend.getEstimatedBPM(inputPath);
+      // ignore: avoid_print
       print('Estimated BPM: $bpmStr');
       expect(bpmStr, isNot(contains('Error')));
       final bpm = double.parse(bpmStr);
@@ -51,6 +53,7 @@ void main() {
     final outputPath = p.join(tmpDir.path, 'audio.mp4');
     
     try {
+      // ignore: avoid_print
       print('Downloading audio to: $outputPath');
       final error = backend.downloadAudio(url, outputPath);
       if (error != null) {
@@ -75,15 +78,19 @@ void main() {
     // We expect failure if the files are not present
     final error = backend.initStemmer(modelPath, libPath);
     if (error != null) {
+      // ignore: avoid_print
       print('InitStemmer failed as expected: $error');
     } else {
+      // ignore: avoid_print
       print('InitStemmer succeeded (unexpected without model file)');
     }
 
     final splitError = backend.splitAudio("input.mp4", "output/", ['vocals', 'drums', 'bass', 'other']);
     if (splitError != null) {
+      // ignore: avoid_print
       print('SplitAudio failed as expected: $splitError');
     } else {
+      // ignore: avoid_print
       print('SplitAudio succeeded (dummy call)');
     }
   });
@@ -96,18 +103,21 @@ void main() {
     final outputDir = Directory.systemTemp.createTempSync('yt_stem_full').path;
 
     try {
+      // ignore: avoid_print
       print('Initializing Stemmer...');
       final initError = backend.initStemmer(modelPath, libPath);
       if (initError != null) {
         fail('FFI InitStemmer failed: $initError');
       }
 
+      // ignore: avoid_print
       print('Starting Full Stemming for: $inputPath');
       final splitError = backend.splitAudio(inputPath, outputDir, ['vocals', 'drums', 'bass', 'other']);
       if (splitError != null) {
         fail('FFI SplitAudio failed: $splitError');
       }
 
+      // ignore: avoid_print
       print('Stemming complete. Checking output files in $outputDir');
       final stems = ['vocals.wav', 'drums.wav', 'bass.wav', 'other.wav'];
       for (final stem in stems) {

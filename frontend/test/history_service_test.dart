@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:youtube_stemmer/history_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'dart:io';
-import 'package:path/path.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
