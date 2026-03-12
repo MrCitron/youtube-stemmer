@@ -37,3 +37,8 @@ This file tracks the high-level progress of the project.
 
 - [x] **Track: Comprehensive Documentation**
 *Link: [./archive/comprehensive_documentation_20260308/](./archive/comprehensive_documentation_20260308/)*
+
+---
+
+- [ ] **Track: GitHub Release Pipeline**
+*Link: [./tracks/github_release_pipeline_20260312/](./tracks/github_release_pipeline_20260312/)*

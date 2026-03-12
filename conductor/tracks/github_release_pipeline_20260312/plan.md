@@ -1,0 +1,31 @@
+# Implementation Plan: github_release_pipeline_20260312
+
+## Phase 1: Pipeline Infrastructure
+- [ ] Task: Create the GitHub Actions workflow file (`.github/workflows/release.yml`).
+- [ ] Task: Implement the trigger logic for `v*` tags.
+- [ ] Task: Configure the job matrix for Linux and macOS environments.
+- [ ] Task: Conductor - User Manual Verification 'Pipeline Infrastructure' (Protocol in workflow.md)
+
+## Phase 2: Linux Build & Package
+- [ ] Task: Implement Rust backend build step for Linux.
+- [ ] Task: Implement Flutter frontend build step for Linux.
+- [ ] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
+- [ ] Task: Conductor - User Manual Verification 'Linux Build & Package' (Protocol in workflow.md)
+
+## Phase 3: macOS Build & Package
+- [ ] Task: Implement Rust backend build step for macOS (Universal Binary).
+- [ ] Task: Implement Flutter frontend build step for macOS.
+- [ ] Task: Implement packaging logic (e.g., zip) for macOS assets.
+- [ ] Task: Conductor - User Manual Verification 'macOS Build & Package' (Protocol in workflow.md)
+
+## Phase 4: Release & Documentation
+- [ ] Task: Implement the GitHub Release creation step with auto-generated notes.
+- [ ] Task: Implement the asset upload step for built Linux and macOS packages.
+- [ ] Task: Add the build status badge to the root `README.md`.
+- [ ] Task: Conductor - User Manual Verification 'Release & Documentation' (Protocol in workflow.md)
+
+## Phase 5: Validation
+- [ ] Task: Perform a test release by pushing a dummy version tag.
+- [ ] Task: Verify the release notes and attached assets on the GitHub Release page.
+- [ ] Task: Verify the build status badge in `README.md`.
+- [ ] Task: Conductor - User Manual Verification 'Validation' (Protocol in workflow.md)
