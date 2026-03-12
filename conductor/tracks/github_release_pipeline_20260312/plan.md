@@ -4,12 +4,12 @@
 - [x] Task: Create the GitHub Actions workflow file (`.github/workflows/release.yml`).
 - [x] Task: Implement the trigger logic for `v*` tags.
 - [x] Task: Configure the job matrix for Linux and macOS environments.
-- [ ] Task: Conductor - User Manual Verification 'Pipeline Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Pipeline Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Linux Build & Package
-- [ ] Task: Implement Rust backend build step for Linux.
-- [ ] Task: Implement Flutter frontend build step for Linux.
-- [ ] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
+- [x] Task: Implement Rust backend build step for Linux.
+- [x] Task: Implement Flutter frontend build step for Linux.
+- [x] Task: Implement packaging logic (e.g., tar.gz) for Linux assets.
 - [ ] Task: Conductor - User Manual Verification 'Linux Build & Package' (Protocol in workflow.md)
 
 ## Phase 3: macOS Build & Package
