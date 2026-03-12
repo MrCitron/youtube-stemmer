@@ -5,6 +5,11 @@
 *.bak
 *.tmp
 *.temp
+**/.DS_Store
+*.app/
+
+# Build scripts (local)
+backend/build.sh
 
 # Backend (Rust)
 backend/target/
@@ -32,6 +37,9 @@ frontend/.pub/
 frontend/pubspec.lock
 frontend/macos/libbackend.dylib
 frontend/macos/libonnxruntime.dylib
+frontend/macos/Podfile
+frontend/macos/Podfile.lock
+frontend/ios/Podfile
 frontend/windows/libbackend.dll
 frontend/windows/onnxruntime.dll
 frontend/linux/libbackend.so
