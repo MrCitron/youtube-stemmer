@@ -2,11 +2,13 @@ use std::path::Path;
 use hound;
 
 /// Regular beat click: high-pitched short transient (beats 2-4)
+#[allow(dead_code)]
 pub fn generate_click(path: &Path) -> Result<(), String> {
     generate_click_wav(path, 4500.0, 200.0, 1000.0, 40.0, 0.65, 0.35)
 }
 
 /// Downbeat click: lower-pitched, slightly longer (beat 1 of each measure)
+#[allow(dead_code)]
 pub fn generate_click_down(path: &Path) -> Result<(), String> {
     generate_click_wav(path, 2800.0, 140.0, 700.0, 28.0, 0.55, 0.45)
 }
@@ -17,6 +19,7 @@ pub fn generate_click_down(path: &Path) -> Result<(), String> {
 /// - crack_freq / crack_decay: frequency (Hz) and decay rate for the transient attack
 /// - body_freq / body_decay:   frequency (Hz) and decay rate for the resonant body
 /// - crack_mix / body_mix:     mixing weights (should sum ≤ 1.0)
+#[allow(dead_code)]
 fn generate_click_wav(
     path: &Path,
     crack_freq: f64,
