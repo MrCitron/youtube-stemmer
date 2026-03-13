@@ -54,15 +54,25 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 720);
 
-  // Set application icon
-  g_autoptr(GdkPixbuf) icon = gdk_pixbuf_new_from_file("data/flutter_assets/assets/icon.png", nullptr);
-  if (icon != nullptr) {
-    gtk_window_set_icon(window, icon);
-  }
-
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
+
+  // Set application icon
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe_path != nullptr) {
+    g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+    g_autofree gchar* icon_path = g_build_filename(exe_dir, "data", "flutter_assets", "assets", "icon.png", nullptr);
+    GError* error = nullptr;
+    g_autoptr(GdkPixbuf) icon = gdk_pixbuf_new_from_file(icon_path, &error);
+    if (icon != nullptr) {
+      gtk_window_set_icon(window, icon);
+    } else {
+      g_warning("Failed to load icon: %s", error->message);
+      g_clear_error(&error);
+    }
+  }
+
 
   FlView* view = fl_view_new(project);
   GdkRGBA background_color;
@@ -147,6 +157,7 @@ MyApplication* my_application_new() {
   // corresponding .desktop file. This ensures better integration by allowing
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
+  g_set_application_name("YouTube Stemmer");
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",
