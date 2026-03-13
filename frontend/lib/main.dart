@@ -41,15 +41,12 @@ void main() async {
     runApp(const MyApp());
   } catch (e, stack) {
     // If it fails before runApp, the screen remains white.
-    // We try to log to a file for diagnosis.
     try {
-      final appSupportDir = await getApplicationSupportDirectory();
-      final logFile = File(p.join(appSupportDir.path, 'startup_error.log'));
+      final logFile = File('startup_error.log');
       await logFile.writeAsString('Error: $e\nStack: $stack');
     } catch (_) {
       // ignore
     }
-    // Re-throw to see it in debugger if any
     rethrow;
   }
 }
