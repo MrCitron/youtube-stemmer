@@ -191,10 +191,11 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let track_id = track.id;
+    let sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
 
     let spec = hound::WavSpec {
         channels: 2,
-        sample_rate: 44100,
+        sample_rate: sample_rate,
         bits_per_sample: 16,
         sample_format: hound::SampleFormat::Int,
     };

@@ -146,6 +146,22 @@ class MyAppState extends State<MyApp> {
         colorScheme: lightColorScheme,
         useMaterial3: true,
         fontFamily: 'Inter',
+        segmentedButtonTheme: SegmentedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+              if (states.contains(WidgetState.selected)) {
+                return lightColorScheme.primary;
+              }
+              return null;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              return lightColorScheme.onSurface.withValues(alpha: 0.7);
+            }),
+          ),
+        ),
         cardTheme: CardThemeData(
           color: lightColorScheme.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
