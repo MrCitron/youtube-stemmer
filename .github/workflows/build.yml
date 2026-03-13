@@ -2,7 +2,7 @@ name: Build & Package Desktop
 
 on:
   push:
-    branches: [ main, 'fix/**', 'feat/**' ]
+    branches: [ main ]
     paths:
       - 'backend/**'
       - 'frontend/**'
@@ -144,9 +144,14 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           cd frontend/build/linux/x64/release/bundle
-          cp $GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} .
-          cp $GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} .
+          mkdir -p lib
+          cp $GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} lib/
+          cp $GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} lib/
           cp $GITHUB_WORKSPACE/backend/yt-dlp .
+          cp $GITHUB_WORKSPACE/scripts/install_launcher.sh .
+          cp $GITHUB_WORKSPACE/scripts/uninstall.sh .
+          cp $GITHUB_WORKSPACE/scripts/youtube_stemmer.desktop.template .
+          chmod +x install_launcher.sh uninstall.sh
           tar -czf $GITHUB_WORKSPACE/youtube-stemmer-linux.tar.gz .
 
       - name: Package Artifacts (Windows)
