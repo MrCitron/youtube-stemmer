@@ -27,10 +27,10 @@ mkdir -p $BUNDLE_DIR/lib
 cp -r $PROJECT_ROOT/frontend/build/linux/x64/release/bundle/* $BUNDLE_DIR/
 
 # Copy installation scripts
-cp $PROJECT_ROOT/scripts/install.sh $BUNDLE_DIR/
+cp $PROJECT_ROOT/scripts/install_launcher.sh $BUNDLE_DIR/
 cp $PROJECT_ROOT/scripts/uninstall.sh $BUNDLE_DIR/
 cp $PROJECT_ROOT/scripts/youtube_stemmer.desktop.template $BUNDLE_DIR/
-chmod +x $BUNDLE_DIR/install.sh
+chmod +x $BUNDLE_DIR/install_launcher.sh
 chmod +x $BUNDLE_DIR/uninstall.sh
 
 # Copy Rust backend shared library
