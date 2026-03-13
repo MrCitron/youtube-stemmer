@@ -391,7 +391,7 @@ class _StemPlayerState extends State<StemPlayer> {
     bool enabled = true,
   }) {
     final color = !enabled 
-        ? Colors.grey.withOpacity(0.3)
+        ? Colors.grey.withValues(alpha: 0.3)
         : (isSelected ? Theme.of(context).colorScheme.primary : Colors.grey);
     
     return InkWell(
@@ -400,10 +400,11 @@ class _StemPlayerState extends State<StemPlayer> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected && enabled ? color.withOpacity(0.1) : Colors.transparent,
+          color: isSelected && enabled ? color.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(isSelected && enabled ? 0.5 : 0.2)),
+          border: Border.all(color: color.withValues(alpha: isSelected && enabled ? 0.5 : 0.2)),
         ),
+
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -442,7 +443,7 @@ class _StemPlayerState extends State<StemPlayer> {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -537,14 +538,14 @@ class _StemPlayerState extends State<StemPlayer> {
                       icon: const Icon(Icons.replay_10, size: 32),
                       onPressed: _skipBack,
                       tooltip: 'Back 10s',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 16),
                     IconButton(
                       icon: const Icon(Icons.stop_circle_outlined, size: 32),
                       onPressed: _stop,
                       tooltip: 'Stop',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 16),
                     Container(
@@ -555,7 +556,7 @@ class _StemPlayerState extends State<StemPlayer> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha:0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -574,7 +575,7 @@ class _StemPlayerState extends State<StemPlayer> {
                       icon: const Icon(Icons.forward_10, size: 32),
                       onPressed: _skipForward,
                       tooltip: 'Forward 10s',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -605,7 +606,7 @@ class _StemPlayerState extends State<StemPlayer> {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+            side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -623,7 +624,7 @@ class _StemPlayerState extends State<StemPlayer> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${_bpm.toStringAsFixed(0)}',
+                          _bpm.toStringAsFixed(0),
                           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.amber, fontFamily: 'monospace', height: 1.0),
                         ),
                         const Text(
@@ -698,7 +699,7 @@ class _StemPlayerState extends State<StemPlayer> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha:0.5)),
                       ),
                       child: Column(
                         children: [
@@ -707,7 +708,7 @@ class _StemPlayerState extends State<StemPlayer> {
                             style: TextStyle(
                               fontSize: 10, 
                               fontWeight: FontWeight.bold, 
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -722,9 +723,9 @@ class _StemPlayerState extends State<StemPlayer> {
                                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
                                   overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
                                   activeTrackColor: _soloedStems.isNotEmpty && !isSoloed
-                                      ? Colors.grey.withOpacity(0.2)
+                                      ? Colors.grey.withValues(alpha:0.2)
                                       : Theme.of(context).colorScheme.primary,
-                                  inactiveTrackColor: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                  inactiveTrackColor: Theme.of(context).colorScheme.surface.withValues(alpha:0.5),
                                   thumbColor: Theme.of(context).colorScheme.primary,
                                 ),
                                 child: Slider(
@@ -747,8 +748,8 @@ class _StemPlayerState extends State<StemPlayer> {
                                   minimumSize: const Size(36, 36),
                                   padding: EdgeInsets.zero,
                                   backgroundColor: isMuted 
-                                      ? Colors.red.withOpacity(0.2) 
-                                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                      ? Colors.red.withValues(alpha:0.2) 
+                                      : Theme.of(context).colorScheme.surface.withValues(alpha:0.5),
                                   foregroundColor: isMuted ? Colors.red : Colors.grey,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
@@ -765,8 +766,8 @@ class _StemPlayerState extends State<StemPlayer> {
                                   minimumSize: const Size(36, 36),
                                   padding: EdgeInsets.zero,
                                   backgroundColor: isSoloed 
-                                      ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
-                                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                      ? Theme.of(context).colorScheme.primary.withValues(alpha:0.2) 
+                                      : Theme.of(context).colorScheme.surface.withValues(alpha:0.5),
                                   foregroundColor: isSoloed ? Theme.of(context).colorScheme.primary : Colors.grey,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
