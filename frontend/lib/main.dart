@@ -22,6 +22,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // Ensure the application support directory exists early, 
+      // as some plugins might fail if it's missing on first run.
+      final appSupportDir = await getApplicationSupportDirectory();
+      if (!await appSupportDir.exists()) {
+        await appSupportDir.create(recursive: true);
+      }
+
       await windowManager.ensureInitialized();
       const windowOptions = WindowOptions(
         size: Size(600, 1100),
@@ -41,9 +48,13 @@ void main() async {
     runApp(const MyApp());
   } catch (e, stack) {
     // If it fails before runApp, the screen remains white.
+    // We try to log to a file for diagnosis in both the working dir and support dir.
     try {
-      final logFile = File('startup_error.log');
-      await logFile.writeAsString('Error: $e\nStack: $stack');
+      final logContent = 'Error: $e\nStack: $stack';
+      await File('startup_error.log').writeAsString(logContent);
+      
+      final appSupportDir = await getApplicationSupportDirectory();
+      await File(p.join(appSupportDir.path, 'startup_error.log')).writeAsString(logContent);
     } catch (_) {
       // ignore
     }
