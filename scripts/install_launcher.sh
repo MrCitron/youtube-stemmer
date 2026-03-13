@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Improved installation script for YouTube Stemmer Linux
+# Improved installation script for YouTube Stemmer Linux (Handles spaces/special characters)
 
 # Get absolute path of this directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -32,8 +32,12 @@ fi
 DESKTOP_FILE=~/.local/share/applications/youtube_stemmer.desktop
 mkdir -p ~/.local/share/applications
 
+# We use both the global icon name and the absolute path as fallback/best-practice
+# but many environments prefer the absolute path when bundled.
 if [ -f "$DIR/youtube_stemmer.desktop.template" ]; then
+    # Use | as delimiter for sed to avoid issues with / in paths
     sed -e "s|EXEC_PATH|$EXE_PATH|g" \
+        -e "s|ICON_PATH|$SOURCE_ICON|g" \
         "$DIR/youtube_stemmer.desktop.template" > "$DESKTOP_FILE"
 else
     echo "Error: youtube_stemmer.desktop.template not found in $DIR"
@@ -50,4 +54,4 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
 fi
 
 echo "Installation complete!"
-echo "YouTube Stemmer has been added to your application menu with the new icon."
+echo "YouTube Stemmer has been added to your application menu."
