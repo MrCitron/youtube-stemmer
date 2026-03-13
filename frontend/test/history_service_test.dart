@@ -49,5 +49,15 @@ void main() {
       final updatedItem = items.firstWhere((element) => element.id == id);
       expect(updatedItem.title, 'Updated Title');
     });
+
+    test('settings persistence', () async {
+      await service.saveSetting('testKey', 'testValue');
+      final value = await service.getSetting('testKey');
+      expect(value, 'testValue');
+
+      await service.saveSetting('testKey', 'newValue');
+      final newValue = await service.getSetting('testKey');
+      expect(newValue, 'newValue');
+    });
   });
 }

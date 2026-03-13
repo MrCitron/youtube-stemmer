@@ -74,6 +74,27 @@ class MyAppState extends State<MyApp> {
   static const Color surfaceDark = Color(0xFF251B30);
   static const Color borderDark = Color(0xFF3D2E4D);
 
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final themeStr = await HistoryService().getSetting('themeMode');
+    if (themeStr != null) {
+      setState(() {
+        if (themeStr == 'light') {
+          _themeMode = ThemeMode.light;
+        } else if (themeStr == 'dark') {
+          _themeMode = ThemeMode.dark;
+        } else {
+          _themeMode = ThemeMode.system;
+        }
+      });
+    }
+  }
+
   ThemeMode getThemeMode() => _themeMode;
 
   void toggleTheme() {
@@ -85,7 +106,18 @@ class MyAppState extends State<MyApp> {
       } else {
         _themeMode = ThemeMode.system;
       }
+      _saveThemePreference();
     });
+  }
+
+  Future<void> _saveThemePreference() async {
+    String themeStr = 'system';
+    if (_themeMode == ThemeMode.light) {
+      themeStr = 'light';
+    } else if (_themeMode == ThemeMode.dark) {
+      themeStr = 'dark';
+    }
+    await HistoryService().saveSetting('themeMode', themeStr);
   }
 
   @override

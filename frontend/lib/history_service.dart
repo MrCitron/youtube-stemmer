@@ -56,6 +56,7 @@ class HistoryService {
   static Database? _database;
   static const String tableName = 'history';
   static const String urlHistoryTable = 'url_history';
+  static const String settingsTable = 'settings';
   final String? dbPath;
 
   HistoryService({this.dbPath});
@@ -78,7 +79,7 @@ class HistoryService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $tableName (
@@ -99,6 +100,12 @@ class HistoryService {
             timestamp TEXT
           )
         ''');
+        await db.execute('''
+          CREATE TABLE $settingsTable (
+            key TEXT PRIMARY KEY,
+            value TEXT
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -110,6 +117,14 @@ class HistoryService {
               url TEXT PRIMARY KEY,
               title TEXT,
               timestamp TEXT
+            )
+          ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS $settingsTable (
+              key TEXT PRIMARY KEY,
+              value TEXT
             )
           ''');
         }
@@ -172,5 +187,29 @@ class HistoryService {
   Future<List<Map<String, dynamic>>> getUrlHistory() async {
     final db = await database;
     return await db.query(urlHistoryTable, orderBy: 'timestamp DESC');
+  }
+
+  // --- Settings ---
+
+  Future<void> saveSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      settingsTable,
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<String?> getSetting(String key) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      settingsTable,
+      where: 'key = ?',
+      whereArgs: [key],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first['value'] as String?;
+    }
+    return null;
   }
 }
