@@ -28,6 +28,9 @@ yt-dlp.exe
 # Legacy
 backend_go_legacy/
 
+# Distribution
+dist/
+
 # Frontend (Flutter)
 frontend/build/
 frontend/.dart_tool/
