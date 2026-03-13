@@ -1,13 +1,40 @@
-.PHONY: package-linux package-windows clean
+.PHONY: backend frontend build package release clean
 
-package-linux:
-	./scripts/package.sh
+# Detect OS
+OS := $(shell python3 -c "import platform; print(platform.system())")
 
-package-windows:
-	# Note: This might require PowerShell on Windows or cross-compilation setup
-	pwsh ./scripts/package.ps1
+# Default target
+build: backend frontend
+
+backend:
+	@echo "Building Rust backend for $(OS)..."
+ifeq ($(OS), Darwin)
+	cd backend && rustup target add x86_64-apple-darwin aarch64-apple-darwin
+	cd backend && MACOSX_DEPLOYMENT_TARGET=11.0 cargo build --release --target x86_64-apple-darwin
+	cd backend && MACOSX_DEPLOYMENT_TARGET=11.0 cargo build --release --target aarch64-apple-darwin
+	cd backend && lipo -create -output libbackend.dylib \
+		target/aarch64-apple-darwin/release/libbackend.dylib \
+		target/x86_64-apple-darwin/release/libbackend.dylib
+else
+	cd backend && cargo build --release
+endif
+
+frontend:
+	@echo "Building Flutter frontend..."
+	cd frontend && flutter build $(shell python3 -c "import platform; print(platform.system().lower().replace('darwin', 'macos'))") --release
+
+package:
+	@echo "Packaging application (Snapshot)..."
+	python3 scripts/package.py
+
+release:
+	@echo "Packaging application (Release)..."
+	python3 scripts/package.py --release
 
 clean:
+	@echo "Cleaning project..."
 	rm -rf dist/
-	cd backend && make clean
+	rm -rf temp_deps/
+	cd backend && cargo clean
+	rm -f backend/libbackend.dylib
 	cd frontend && flutter clean

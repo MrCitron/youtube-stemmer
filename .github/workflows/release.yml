@@ -53,76 +53,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential pkg-config libgtk-3-dev libblkid-dev liblzma-dev libnm-dev libsecret-1-dev libssl-dev
 
-      - name: Build Rust Backend
+      - name: Build and Package
         shell: bash
         run: |
-          cd backend
-          if [[ "${{ matrix.platform }}" == "macos" ]]; then
-            export MACOSX_DEPLOYMENT_TARGET=11.0
-            cargo build --release --target aarch64-apple-darwin
-            cargo build --release --target x86_64-apple-darwin
-            lipo -create -output ${{ matrix.backend_lib }} \
-              target/aarch64-apple-darwin/release/libbackend.dylib \
-              target/x86_64-apple-darwin/release/libbackend.dylib
-          else
-            cargo build --release
-            cp target/release/libbackend.so .
-          fi
-
-      - name: Download ONNX Runtime
-        shell: bash
-        run: |
-          mkdir -p onnx_temp
-          curl -Lf ${{ matrix.onnx_url }} -o onnx_archive
-          tar -xzf onnx_archive -C onnx_temp
-          find onnx_temp -name "${{ matrix.onnx_lib }}" -exec cp {} . \;
-          mv ${{ matrix.onnx_lib }} backend/
-
-      - name: Download yt-dlp
-        shell: bash
-        run: |
-          curl -Lf ${{ matrix.ytdlp_url }} -o ${{ matrix.ytdlp_bin }}
-          chmod +x ${{ matrix.ytdlp_bin }}
-          mv ${{ matrix.ytdlp_bin }} backend/
-
-      - name: Prepare Frontend
-        run: |
-          cp backend/${{ matrix.backend_lib }} frontend/${{ matrix.platform }}/
-          cp backend/${{ matrix.onnx_lib }} frontend/${{ matrix.platform }}/
-          cp backend/yt-dlp frontend/${{ matrix.platform }}/
-
-      - name: Build Flutter App
-        run: |
-          cd frontend
-          flutter pub get
-          flutter build ${{ matrix.platform }} --release
-
-      - name: Package Artifacts (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          cd frontend/build/linux/x64/release/bundle
-          mkdir -p lib
-          cp $GITHUB_WORKSPACE/backend/${{ matrix.backend_lib }} lib/
-          cp $GITHUB_WORKSPACE/backend/${{ matrix.onnx_lib }} lib/
-          cp $GITHUB_WORKSPACE/backend/yt-dlp .
-          cp $GITHUB_WORKSPACE/scripts/install_launcher.sh .
-          cp $GITHUB_WORKSPACE/scripts/uninstall.sh .
-          cp $GITHUB_WORKSPACE/scripts/youtube_stemmer.desktop.template .
-          chmod +x install_launcher.sh uninstall.sh
-          tar -czf $GITHUB_WORKSPACE/${{ matrix.asset_name }} .
-
-      - name: Package Artifacts (MacOS)
-        if: matrix.platform == 'macos'
-        run: |
-          cd frontend/build/macos/Build/Products/Release/
-          cp $GITHUB_WORKSPACE/backend/yt-dlp "youtube_stemmer.app/Contents/MacOS/"
-          zip -r $GITHUB_WORKSPACE/${{ matrix.asset_name }} "youtube_stemmer.app"
+          make build
+          python3 scripts/package.py --platform ${{ matrix.platform == 'macos' && 'Darwin' || 'Linux' }} --release --output-name youtube-stemmer-${{ matrix.platform }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-build
-          path: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.platform == 'macos' && 'darwin' || 'linux' }}/youtube-stemmer-${{ matrix.platform }}.*
 
   release:
     name: Create GitHub Release
@@ -164,8 +105,8 @@ jobs:
         with:
           body: ${{ steps.extract_notes.outputs.notes }}
           files: |
-            youtube-stemmer-linux.tar.gz
-            youtube-stemmer-macos.zip
+            dist/linux/youtube-stemmer-linux.tar.gz
+            dist/darwin/youtube-stemmer-macos.zip
           generate_release_notes: false
           draft: false
           prerelease: false

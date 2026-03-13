@@ -45,3 +45,6 @@ This file tracks the high-level progress of the project.
 
 - [x] **Track: UI Enhancements**
 *Link: [./archive/ui_enhancements_20260312/](./archive/ui_enhancements_20260312/)*
+
+- [x] **Track: Build and Release Optimization**
+*Link: [./tracks/build_optimization_20260313/index.md](./tracks/build_optimization_20260313/index.md)*

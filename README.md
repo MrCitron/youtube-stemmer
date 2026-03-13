@@ -47,12 +47,12 @@ To start using YouTube Stemmer, download the latest version for your platform fr
 - **Rust Toolchain:** [Install Rust](https://rustup.rs/)
 - **ONNX Runtime:** Shared libraries for your platform.
 
-### Quick Build (Linux)
+### Quick Build
 
-1. **Build the Backend:**
+1. **Build and Package (Current Platform):**
    ```bash
-   cd backend
-   cargo build --release
+   make build
+   make package
    ```
 
 2. **Run the Frontend:**
