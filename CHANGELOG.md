@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - Build System & Release Unification
+
+### Improved
+- **Build System**: Unified build and packaging process using a central `Makefile` and `scripts/package.py`.
+- **Release Process**: Introduced a central `VERSION` file and support for snapshot builds with git-hash suffixes.
+- **CI/CD Pipelines**: Optimized GitHub Actions workflows, removing redundant build steps and manual library management.
+- **Cross-Platform Consistency**: Standardized artifact structure and naming across Linux, Windows, and macOS.
+- **Developer Experience**: Added `release-manager` and `gh-pipeline-analyzer` agent skills.
+
 ## [0.2.0] - macOS Stability & Metronome Improvements
 
 macOS Stability & Metronome Improvements
