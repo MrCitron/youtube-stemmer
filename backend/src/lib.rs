@@ -192,14 +192,9 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
     let track_id = track.id;
     let sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
+    let target_rate = 44100;
 
-    let spec = hound::WavSpec {
-        channels: 2,
-        sample_rate: sample_rate,
-        bits_per_sample: 16,
-        sample_format: hound::SampleFormat::Int,
-    };
-    let mut writer = hound::WavWriter::create(output_path, spec).map_err(|e| e.to_string())?;
+    let mut all_samples: Vec<f32> = Vec::new();
 
     while let Ok(packet) = format.next_packet() {
         if ABORT.load(Ordering::Relaxed) {
@@ -215,9 +210,17 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
                 match decoded {
                     symphonia::core::audio::AudioBufferRef::F32(ref buf) => {
                         for i in 0..num_frames {
+                            let mut sum = 0.0;
+                            let planes = buf.planes().planes().len();
                             for ch in 0..2 {
-                                let p = if ch < buf.planes().planes().len() { ch } else { 0 };
-                                writer.write_sample((buf.chan(p)[i] * 32767.0) as i16).map_err(|e| e.to_string())?;
+                                let p = if ch < planes { ch } else { 0 };
+                                sum += buf.chan(p)[i];
+                            }
+                            // Store as mono first for easy processing, or keep stereo?
+                            // HTDemucs expects stereo, so let's keep it interleaved.
+                            for ch in 0..2 {
+                                let p = if ch < planes { ch } else { 0 };
+                                all_samples.push(buf.chan(p)[i]);
                             }
                         }
                     },
@@ -227,6 +230,46 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
             Err(symphonia::core::errors::Error::IoError(_)) => break,
             Err(e) => return Err(e.to_string()),
         }
+    }
+
+    // Resample if needed
+    let final_samples = if sample_rate != target_rate {
+        println!("Rust: Resampling from {}Hz to {}Hz...", sample_rate, target_rate);
+        let ratio = sample_rate as f64 / target_rate as f64;
+        let num_input_frames = all_samples.len() / 2;
+        let num_output_frames = (num_input_frames as f64 / ratio) as usize;
+        let mut resampled = Vec::with_capacity(num_output_frames * 2);
+
+        for i in 0..num_output_frames {
+            let pos = i as f64 * ratio;
+            let idx = pos as usize;
+            let frac = pos - idx as f64;
+
+            for ch in 0..2 {
+                let s1 = all_samples[idx * 2 + ch];
+                let s2 = if idx + 1 < num_input_frames {
+                    all_samples[(idx + 1) * 2 + ch]
+                } else {
+                    s1
+                };
+                resampled.push(s1 * (1.0 - frac as f32) + s2 * frac as f32);
+            }
+        }
+        resampled
+    } else {
+        all_samples
+    };
+
+    let spec = hound::WavSpec {
+        channels: 2,
+        sample_rate: target_rate,
+        bits_per_sample: 16,
+        sample_format: hound::SampleFormat::Int,
+    };
+    let mut writer = hound::WavWriter::create(output_path, spec).map_err(|e| e.to_string())?;
+
+    for s in final_samples {
+        writer.write_sample((s * 32767.0) as i16).map_err(|e| e.to_string())?;
     }
 
     Ok(())
