@@ -164,6 +164,8 @@ pub extern "C" fn GetEstimatedBPM(path: *const c_char) -> *mut c_char {
     CString::new(final_res).unwrap().into_raw()
 }
 
+use symphonia::core::audio::SampleBuffer;
+
 fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let src = File::open(input_path).map_err(|e| e.to_string())?;
     let mss = MediaSourceStream::new(Box::new(src), Default::default());
@@ -197,6 +199,8 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     println!("Rust: convert_to_wav: input_rate={}Hz, target_rate={}Hz", sample_rate, target_rate);
 
     let mut all_samples: Vec<f32> = Vec::new();
+    let mut sample_buf = None;
+    let mut total_decoded_frames = 0;
 
     while let Ok(packet) = format.next_packet() {
         if ABORT.load(Ordering::Relaxed) {
@@ -208,18 +212,18 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
         match decoder.decode(&packet) {
             Ok(decoded) => {
-                let num_frames = decoded.frames();
-                match decoded {
-                    symphonia::core::audio::AudioBufferRef::F32(ref buf) => {
-                        let planes = buf.planes().planes().len();
-                        for i in 0..num_frames {
-                            for ch in 0..2 {
-                                let p = if ch < planes { ch } else { 0 };
-                                all_samples.push(buf.chan(p)[i]);
-                            }
-                        }
-                    },
-                    _ => return Err("Unsupported audio format".to_string()),
+                let frames = decoded.frames();
+                total_decoded_frames += frames;
+
+                if sample_buf.is_none() {
+                    let spec = *decoded.spec();
+                    println!("Rust: Decoder spec: channels={}, rate={}", spec.channels.count(), spec.rate);
+                    sample_buf = Some(SampleBuffer::<f32>::new(decoded.capacity() as u64, spec));
+                }
+
+                if let Some(ref mut sb) = sample_buf {
+                    sb.copy_interleaved_ref(decoded);
+                    all_samples.extend_from_slice(sb.samples());
                 }
             }
             Err(symphonia::core::errors::Error::IoError(_)) => break,
@@ -227,8 +231,10 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
         }
     }
 
-    let num_input_frames = all_samples.len() / 2;
-    println!("Rust: convert_to_wav: collected {} input frames", num_input_frames);
+    let num_collected_samples = all_samples.len();
+    let num_input_frames = num_collected_samples / 2;
+    println!("Rust: convert_to_wav: decoded_frames={}, collected_samples={}, frames_calc={}", 
+             total_decoded_frames, num_collected_samples, num_input_frames);
 
     // Resample if needed
     let final_samples = if sample_rate != target_rate {
