@@ -50,7 +50,7 @@ jobs:
             ytdlp_bin: yt-dlp.exe
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -75,7 +75,7 @@ jobs:
           python3 scripts/package.py --platform ${{ matrix.platform == 'macos' && 'Darwin' || (matrix.platform == 'windows' && 'Windows' || 'Linux') }} --output-name youtube-stemmer-${{ matrix.platform }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtube-stemmer-${{ matrix.platform }}
           path: dist/${{ matrix.platform == 'macos' && 'darwin' || matrix.platform }}/youtube-stemmer-${{ matrix.platform }}.*
