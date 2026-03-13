@@ -620,11 +620,19 @@ pub extern "C" fn SplitAudio(
         }
 
         let _ = std::fs::create_dir_all(&output_dir_str);
+        let output_spec = hound::WavSpec {
+            channels: 2,
+            sample_rate: 44100,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+
         for (idx, name) in stem_names_vec.iter().enumerate() {
             let path = Path::new(&output_dir_str).join(format!("{}.wav", name));
-            let mut writer = hound::WavWriter::create(path, spec).map_err(|e| e.to_string())?;
+            let mut writer = hound::WavWriter::create(path, output_spec).map_err(|e| e.to_string())?;
             for s in &output_stems[idx] {
-                writer.write_sample((s * 32767.0) as i16).map_err(|e| e.to_string())?;
+                let clamped = s.clamp(-1.0, 1.0);
+                writer.write_sample((clamped * 32767.0) as i16).map_err(|e| e.to_string())?;
             }
         }
 
