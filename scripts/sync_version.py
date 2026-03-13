@@ -19,7 +19,7 @@ def update_pubspec_yaml(path, version):
         f.write(new_content)
     print(f"Updated {path} to {version}")
 
-def update_changelog(path, version, date):
+def update_changelog(path, version, title):
     with open(path, 'r') as f:
         lines = f.readlines()
     
@@ -27,7 +27,7 @@ def update_changelog(path, version, date):
     found_unreleased = False
     for line in lines:
         if line.startswith('## [Unreleased]'):
-            new_lines.append(f'## [{version}] - {date}\n')
+            new_lines.append(f'## [{version}] - {title}\n')
             found_unreleased = True
         else:
             new_lines.append(line)
@@ -38,7 +38,7 @@ def update_changelog(path, version, date):
         final_lines = []
         for line in new_lines:
             if not inserted and line.startswith('## ['):
-                final_lines.append(f'## [{version}] - {date}\n\n')
+                final_lines.append(f'## [{version}] - {title}\n\n')
                 inserted = True
             final_lines.append(line)
         new_lines = final_lines
@@ -54,11 +54,11 @@ def update_version_file(path, version):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python sync_version.py <version> <date> [root_dir]")
+        print("Usage: python sync_version.py <version> <title> [root_dir]")
         sys.exit(1)
     
     version = sys.argv[1]
-    date = sys.argv[2]
+    title = sys.argv[2]
     root_dir = sys.argv[3] if len(sys.argv) > 3 else "."
 
     version_file_path = os.path.join(root_dir, "VERSION")

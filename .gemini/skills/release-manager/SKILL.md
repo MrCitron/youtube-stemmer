@@ -17,7 +17,7 @@ When asked to prepare a release (e.g., "Prepare release v0.3.0"):
 2.  **Determine Version**: Use the version provided by the user or propose a SemVer bump.
 3.  **Sync Versions**: Use `scripts/sync_version.py` from the project root.
     ```bash
-    python scripts/sync_version.py <version> <YYYY-MM-DD> .
+    python scripts/sync_version.py <version> "<Synthetic Name>" .
     ```
 4.  **Verify Build**: Recommend running `make package-linux` to verify the build process.
 5.  **Git Operations**: Propose creating a git tag and pushing it.
