@@ -63,3 +63,4 @@ flutter:
   assets:
     - assets/click.wav
     - assets/click_down.wav
+    - assets/icon.png
