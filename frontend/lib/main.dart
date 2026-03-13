@@ -830,8 +830,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       const SizedBox(height: 16),
                       RawAutocomplete<Map<String, dynamic>>(
-                        focusNode: _urlFocusNode,
-                        textEditingController: _urlController,
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           return _urlHistory.where((Map<String, dynamic> option) {
                             return option['url'].toString().toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
@@ -840,6 +838,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         displayStringForOption: (Map<String, dynamic> option) => option['url'],
                         fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+                          // Initial sync from outer to inner if needed
+                          if (_urlController.text.isNotEmpty && textEditingController.text.isEmpty) {
+                            textEditingController.text = _urlController.text;
+                          }
+
                           return TextField(
                             controller: textEditingController,
                             focusNode: focusNode,
@@ -857,6 +860,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                             enabled: !_isProcessing,
+                            onChanged: (value) => _urlController.text = value,
                             onSubmitted: (_) => _processUrl(),
                           );
                         },
@@ -1122,16 +1126,24 @@ class _LogOverlayState extends State<LogOverlay> {
                 multiSelectionEnabled: false,
                 emptySelectionAllowed: false,
                 showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
+                style: ButtonStyle(
                   visualDensity: VisualDensity.compact,
-                  selectedBackgroundColor: Theme.of(context).colorScheme.primary,
-                  selectedForegroundColor: Colors.white,
-                  backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.white.withValues(alpha: 0.1) 
-                      : Colors.black.withValues(alpha: 0.05),
-                  foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.white70 
-                      : Colors.black87,
+                  backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Theme.of(context).colorScheme.primary;
+                    }
+                    return Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.white.withValues(alpha: 0.1) 
+                        : Colors.black.withValues(alpha: 0.05);
+                  }),
+                  foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return Colors.white70;
+                  }),
+                  side: WidgetStateProperty.all(const BorderSide(color: Colors.white24)),
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 ),
               ),
             ),
