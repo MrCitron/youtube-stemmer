@@ -20,24 +20,38 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
-      size: Size(600, 1100),
-      center: true,
-      title: 'YouTube Stemmer',
-    );
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-      await windowManager.setMinimumSize(const Size(600, 800));
-    });
+  try {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      await windowManager.ensureInitialized();
+      const windowOptions = WindowOptions(
+        size: Size(600, 1100),
+        center: true,
+        title: 'YouTube Stemmer',
+      );
+      await windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+        await windowManager.setMinimumSize(const Size(600, 800));
+      });
 
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+    JustAudioMediaKit.ensureInitialized();
+    runApp(const MyApp());
+  } catch (e, stack) {
+    // If it fails before runApp, the screen remains white.
+    // We try to log to a file for diagnosis.
+    try {
+      final appSupportDir = await getApplicationSupportDirectory();
+      final logFile = File(p.join(appSupportDir.path, 'startup_error.log'));
+      await logFile.writeAsString('Error: $e\nStack: $stack');
+    } catch (_) {
+      // ignore
+    }
+    // Re-throw to see it in debugger if any
+    rethrow;
   }
-  JustAudioMediaKit.ensureInitialized();
-  runApp(const MyApp());
 }
 
 class ProgressTracker {
