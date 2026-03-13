@@ -6,6 +6,7 @@
 - **Phase 3: Workflow Refactoring**: [x] (Removed all redundant build steps, simplified to `make build`)
 - **Phase 4: Cleanup and Finalization**: [x]
 - **Versioning Strategy**: [x] (Central `VERSION` file, `sync_version.py` in `scripts/`)
+- **Project Refinement**: [x] (Removed redundant manual bundling from CMake/Xcode, fixed FFI naming)
 
 ## Context
 This track was created to address the fragmented build and packaging processes discovered during a review of the GitHub pipelines and scripts.
