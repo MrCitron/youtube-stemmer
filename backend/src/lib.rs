@@ -269,7 +269,8 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let mut writer = hound::WavWriter::create(output_path, spec).map_err(|e| e.to_string())?;
 
     for s in final_samples {
-        writer.write_sample((s * 32767.0) as i16).map_err(|e| e.to_string())?;
+        let clamped = s.clamp(-1.0, 1.0);
+        writer.write_sample((clamped * 32767.0) as i16).map_err(|e| e.to_string())?;
     }
 
     Ok(())

@@ -1124,6 +1124,14 @@ class _LogOverlayState extends State<LogOverlay> {
                 showSelectedIcon: false,
                 style: SegmentedButton.styleFrom(
                   visualDensity: VisualDensity.compact,
+                  selectedBackgroundColor: Theme.of(context).colorScheme.primary,
+                  selectedForegroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white.withValues(alpha: 0.1) 
+                      : Colors.black.withValues(alpha: 0.05),
+                  foregroundColor: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white70 
+                      : Colors.black87,
                 ),
               ),
             ),
