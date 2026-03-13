@@ -422,7 +422,7 @@ class BackendFFI {
   }
 
   static String _getBackendLibraryName() {
-    if (Platform.isWindows) return 'libbackend.dll';
+    if (Platform.isWindows) return 'backend.dll';
     if (Platform.isMacOS || Platform.isIOS) return 'libbackend.dylib';
     return 'libbackend.so';
   }

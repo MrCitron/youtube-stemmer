@@ -76,9 +76,16 @@ jobs:
         id: extract_notes
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          # Extract the full header line for the version
+          HEADER_LINE=$(grep "^## \[$TAG_VERSION\]" CHANGELOG.md | head -n 1)
+          # Extract the title part (after the first " - ")
+          RELEASE_TITLE=$(echo "$HEADER_LINE" | sed -n 's/^## \[[^]]*\] - //p')
+          
+          if [ -z "$RELEASE_TITLE" ]; then
+            RELEASE_TITLE="Release $TAG_VERSION"
+          fi
+
           # Use awk to extract the section for the specific tag
-          # It finds the line starting with ## [ and containing the TAG_VERSION, 
-          # then prints until the next ## [
           NOTES=$(awk "/^## \[$TAG_VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
           
           if [ -z "$NOTES" ]; then
@@ -86,6 +93,7 @@ jobs:
           fi
           
           # Handle multi-line output for GITHUB_OUTPUT
+          echo "title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -103,6 +111,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.extract_notes.outputs.title }}
           body: ${{ steps.extract_notes.outputs.notes }}
           files: |
             dist/linux/youtube-stemmer-linux.tar.gz
