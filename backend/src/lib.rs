@@ -194,6 +194,8 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
     let target_rate = 44100;
 
+    println!("Rust: convert_to_wav: input_rate={}Hz, target_rate={}Hz", sample_rate, target_rate);
+
     let mut all_samples: Vec<f32> = Vec::new();
 
     while let Ok(packet) = format.next_packet() {
@@ -209,15 +211,8 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
                 let num_frames = decoded.frames();
                 match decoded {
                     symphonia::core::audio::AudioBufferRef::F32(ref buf) => {
+                        let planes = buf.planes().planes().len();
                         for i in 0..num_frames {
-                            let mut sum = 0.0;
-                            let planes = buf.planes().planes().len();
-                            for ch in 0..2 {
-                                let p = if ch < planes { ch } else { 0 };
-                                sum += buf.chan(p)[i];
-                            }
-                            // Store as mono first for easy processing, or keep stereo?
-                            // HTDemucs expects stereo, so let's keep it interleaved.
                             for ch in 0..2 {
                                 let p = if ch < planes { ch } else { 0 };
                                 all_samples.push(buf.chan(p)[i]);
@@ -232,11 +227,13 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
         }
     }
 
+    let num_input_frames = all_samples.len() / 2;
+    println!("Rust: convert_to_wav: collected {} input frames", num_input_frames);
+
     // Resample if needed
     let final_samples = if sample_rate != target_rate {
         println!("Rust: Resampling from {}Hz to {}Hz...", sample_rate, target_rate);
         let ratio = sample_rate as f64 / target_rate as f64;
-        let num_input_frames = all_samples.len() / 2;
         let num_output_frames = (num_input_frames as f64 / ratio) as usize;
         let mut resampled = Vec::with_capacity(num_output_frames * 2);
 
@@ -245,16 +242,20 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
             let idx = pos as usize;
             let frac = pos - idx as f64;
 
+            if idx + 1 >= num_input_frames {
+                for ch in 0..2 {
+                    resampled.push(all_samples[idx * 2 + ch]);
+                }
+                continue;
+            }
+
             for ch in 0..2 {
                 let s1 = all_samples[idx * 2 + ch];
-                let s2 = if idx + 1 < num_input_frames {
-                    all_samples[(idx + 1) * 2 + ch]
-                } else {
-                    s1
-                };
+                let s2 = all_samples[(idx + 1) * 2 + ch];
                 resampled.push(s1 * (1.0 - frac as f32) + s2 * frac as f32);
             }
         }
+        println!("Rust: Resampling complete: {} output frames", num_output_frames);
         resampled
     } else {
         all_samples
@@ -570,6 +571,8 @@ pub extern "C" fn SplitAudio(
         let samples: Vec<f32> = reader.samples::<i16>().map(|s| s.unwrap() as f32 / 32767.0).collect();
         let num_channels = spec.channels as usize;
         let num_frames = samples.len() / num_channels;
+
+        println!("Rust: SplitAudio: input frames={}, channels={}, rate={}", num_frames, num_channels, spec.sample_rate);
 
         let chunk_size = 343980;
         let num_chunks = (num_frames + chunk_size - 1) / chunk_size;
