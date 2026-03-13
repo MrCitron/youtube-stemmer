@@ -44,4 +44,4 @@ This file tracks the high-level progress of the project.
 ---
 
 - [x] **Track: UI Enhancements**
-*Link: [./tracks/ui_enhancements_20260312/](./tracks/ui_enhancements_20260312/)*
+*Link: [./archive/ui_enhancements_20260312/](./archive/ui_enhancements_20260312/)*
