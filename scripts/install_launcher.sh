@@ -37,7 +37,6 @@ mkdir -p ~/.local/share/applications
 if [ -f "$DIR/youtube_stemmer.desktop.template" ]; then
     # Use | as delimiter for sed to avoid issues with / in paths
     sed -e "s|EXEC_PATH|$EXE_PATH|g" \
-        -e "s|ICON_PATH|$SOURCE_ICON|g" \
         "$DIR/youtube_stemmer.desktop.template" > "$DESKTOP_FILE"
 else
     echo "Error: youtube_stemmer.desktop.template not found in $DIR"
