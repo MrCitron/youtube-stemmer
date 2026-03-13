@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=YouTube Stemmer
 Exec=EXEC_PATH
-Icon=ICON_PATH
+Icon=youtube_stemmer
 Terminal=false
 Type=Application
 Categories=AudioVideo;Audio;

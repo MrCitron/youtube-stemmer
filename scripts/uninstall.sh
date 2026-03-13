@@ -7,13 +7,22 @@ DESKTOP_FILE=~/.local/share/applications/youtube_stemmer.desktop
 if [ -f "$DESKTOP_FILE" ]; then
     rm "$DESKTOP_FILE"
     echo "Removed desktop entry: $DESKTOP_FILE"
-    
-    # Update the desktop database
-    if command -v update-desktop-database >/dev/null 2>&1; then
-        update-desktop-database ~/.local/share/applications/
-    fi
-else
-    echo "Desktop entry not found, skipping."
+fi
+
+# Remove installed icon
+INSTALLED_ICON=~/.local/share/icons/hicolor/128x128/apps/youtube_stemmer.png
+if [ -f "$INSTALLED_ICON" ]; then
+    rm "$INSTALLED_ICON"
+    echo "Removed installed icon: $INSTALLED_ICON"
+fi
+
+# Update databases
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database ~/.local/share/applications/
+fi
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor >/dev/null 2>&1
 fi
 
 # Ask to remove local data
