@@ -78,4 +78,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: youtube-stemmer-${{ matrix.platform }}
-          path: dist/${{ matrix.platform }}/youtube-stemmer-${{ matrix.platform }}.*
+          path: dist/${{ matrix.platform == 'macos' && 'darwin' || matrix.platform }}/youtube-stemmer-${{ matrix.platform }}.*

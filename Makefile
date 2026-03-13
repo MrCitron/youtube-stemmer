@@ -6,9 +6,9 @@ OS := $(shell python3 -c "import platform; print(platform.system())")
 # Default target
 build: backend frontend
 
-backend:
-	@echo "Building Rust backend for $(OS)..."
 ifeq ($(OS), Darwin)
+backend:
+	@echo "Building Rust backend for macOS (Universal)..."
 	cd backend && rustup target add x86_64-apple-darwin aarch64-apple-darwin
 	cd backend && MACOSX_DEPLOYMENT_TARGET=11.0 cargo build --release --target x86_64-apple-darwin
 	cd backend && MACOSX_DEPLOYMENT_TARGET=11.0 cargo build --release --target aarch64-apple-darwin
@@ -16,6 +16,8 @@ ifeq ($(OS), Darwin)
 		target/aarch64-apple-darwin/release/libbackend.dylib \
 		target/x86_64-apple-darwin/release/libbackend.dylib
 else
+backend:
+	@echo "Building Rust backend for $(OS)..."
 	cd backend && cargo build --release
 endif
 
