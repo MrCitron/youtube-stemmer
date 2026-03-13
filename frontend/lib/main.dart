@@ -901,7 +901,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
 
               if (_stemsDirectory != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: Text(
@@ -913,7 +913,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 StemPlayer(
                   stemsDirectory: _stemsDirectory!,
                   videoTitle: _videoTitle ?? 'stems',

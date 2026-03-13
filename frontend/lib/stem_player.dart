@@ -440,18 +440,13 @@ class _StemPlayerState extends State<StemPlayer> {
       children: [
         // Player Controls Card (Timeline, Playback buttons)
         Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
-          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 // Title
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.only(bottom: 12.0),
                   child: _isEditingTitle
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -584,7 +579,7 @@ class _StemPlayerState extends State<StemPlayer> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         Align(
           alignment: Alignment.centerLeft,
@@ -600,16 +595,11 @@ class _StemPlayerState extends State<StemPlayer> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         // Metronome Card
         Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
-          ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -664,7 +654,7 @@ class _StemPlayerState extends State<StemPlayer> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
@@ -679,7 +669,7 @@ class _StemPlayerState extends State<StemPlayer> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // Studio Mixer (Grid of vertical lanes)
         LayoutBuilder(
@@ -785,7 +775,7 @@ class _StemPlayerState extends State<StemPlayer> {
           }
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
         // Export Section
         ExportUI(
           stemVolumes: _players.map((k, v) => MapEntry(k, v.volume)),
