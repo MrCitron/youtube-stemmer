@@ -55,7 +55,7 @@ def extract_archive(archive_path, extract_to):
         with tarfile.open(archive_path, "r:gz") as tar:
             tar.extractall(path=extract_to)
     elif archive_path.endswith(".zip"):
-        with zipfile.open(archive_path, "r") as zip_ref:
+        with zipfile.ZipFile(archive_path, "r") as zip_ref:
             zip_ref.extractall(extract_to)
 
 def find_file(directory, filename):

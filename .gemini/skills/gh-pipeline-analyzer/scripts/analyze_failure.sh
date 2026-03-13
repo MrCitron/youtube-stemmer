@@ -24,8 +24,10 @@ echo "$FAILED_JOBS"
 echo "-----------------------------------"
 
 # Extract logs for each failed job and look for common error patterns
-for JOB in $FAILED_JOBS; do
-    echo "### Logs for Job: $JOB ###"
-    gh run view $RUN_ID --log --job "$JOB" | grep -iE "error|fail|exception|fatal|error:" | tail -n 20
-    echo "-----------------------------------"
+echo "$FAILED_JOBS" | while read -r JOB; do
+    if [ -n "$JOB" ]; then
+        echo "### Logs for Job: $JOB ###"
+        gh run view $RUN_ID --log --job "$JOB" | grep -iE "error|fail|exception|fatal|error:" | tail -n 20
+        echo "-----------------------------------"
+    fi
 done
