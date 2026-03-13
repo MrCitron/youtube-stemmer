@@ -27,6 +27,11 @@ mkdir -p $BUNDLE_DIR/lib
 # Copy Flutter bundle
 cp -r $PROJECT_ROOT/frontend/build/linux/x64/release/bundle/* $BUNDLE_DIR/
 
+# Copy installation scripts
+cp $PROJECT_ROOT/scripts/install.sh $BUNDLE_DIR/
+cp $PROJECT_ROOT/scripts/youtube_stemmer.desktop.template $BUNDLE_DIR/
+chmod +x $BUNDLE_DIR/install.sh
+
 # Copy Go backend shared library
 cp $PROJECT_ROOT/backend/build/linux/libbackend.so $BUNDLE_DIR/lib/
 
