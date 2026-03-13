@@ -9,11 +9,10 @@ BUNDLE_DIR=$PACKAGE_DIR/youtube_stemmer
 
 echo "Building YouTube Stemmer for Linux..."
 
-# 1. Build Go Backend
-echo "Building Go backend..."
+# 1. Build Rust Backend
+echo "Building Rust backend..."
 cd $PROJECT_ROOT/backend
-make clean
-make linux
+cargo build --release
 
 # 2. Build Flutter Frontend
 echo "Building Flutter frontend..."
@@ -32,8 +31,8 @@ cp $PROJECT_ROOT/scripts/install.sh $BUNDLE_DIR/
 cp $PROJECT_ROOT/scripts/youtube_stemmer.desktop.template $BUNDLE_DIR/
 chmod +x $BUNDLE_DIR/install.sh
 
-# Copy Go backend shared library
-cp $PROJECT_ROOT/backend/build/linux/libbackend.so $BUNDLE_DIR/lib/
+# Copy Rust backend shared library
+cp $PROJECT_ROOT/backend/target/release/libbackend.so $BUNDLE_DIR/lib/
 
 # Copy ONNX runtime shared library
 if [ -f "$PROJECT_ROOT/backend/libonnxruntime.so" ]; then
