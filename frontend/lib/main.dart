@@ -158,7 +158,7 @@ class MyAppState extends State<MyApp> {
               if (states.contains(WidgetState.selected)) {
                 return Colors.white;
               }
-              return lightColorScheme.onSurface.withValues(alpha: 0.7);
+              return lightColorScheme.onSurface;
             }),
           ),
         ),
@@ -176,6 +176,22 @@ class MyAppState extends State<MyApp> {
         scaffoldBackgroundColor: backgroundDark,
         useMaterial3: true,
         fontFamily: 'Inter',
+        segmentedButtonTheme: SegmentedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+              if (states.contains(WidgetState.selected)) {
+                return darkColorScheme.primary;
+              }
+              return null;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              return darkColorScheme.onSurface;
+            }),
+          ),
+        ),
         cardTheme: CardThemeData(
           color: surfaceDark,
           shape: RoundedRectangleBorder(
@@ -814,6 +830,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       const SizedBox(height: 16),
                       RawAutocomplete<Map<String, dynamic>>(
+                        focusNode: _urlFocusNode,
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           return _urlHistory.where((Map<String, dynamic> option) {
                             return option['url'].toString().toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
@@ -822,11 +839,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         displayStringForOption: (Map<String, dynamic> option) => option['url'],
                         fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                          // Synchronize external controller with autocomplete controller
-                          textEditingController.text = _urlController.text;
-                          textEditingController.addListener(() {
-                            _urlController.text = textEditingController.text;
-                          });
+                          // Update text only if it's different to avoid cursor reset
+                          if (textEditingController.text != _urlController.text) {
+                            textEditingController.text = _urlController.text;
+                          }
 
                           return TextField(
                             controller: textEditingController,
@@ -845,6 +861,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                             enabled: !_isProcessing,
+                            onChanged: (value) => _urlController.text = value,
                             onSubmitted: (_) => _processUrl(),
                           );
                         },
