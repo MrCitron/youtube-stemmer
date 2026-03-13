@@ -118,7 +118,7 @@ class MyAppState extends State<MyApp> {
           color: lightColorScheme.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: lightColorScheme.outline.withOpacity(0.1)),
+            side: BorderSide(color: lightColorScheme.outline.withValues(alpha: 0.1)),
           ),
           elevation: 0,
         ),
@@ -206,14 +206,14 @@ class _MyHomePageState extends State<MyHomePage> {
       final f = File(_currentDownloadPath!);
       if (await f.exists()) {
         await f.delete();
-        LogService().debug('Cleaned up partial download: ${_currentDownloadPath}');
+        LogService().debug('Cleaned up partial download: $_currentDownloadPath');
       }
     }
     if (_currentOutputDir != null) {
       final d = Directory(_currentOutputDir!);
       if (await d.exists()) {
         await d.delete(recursive: true);
-        LogService().debug('Cleaned up partial stems directory: ${_currentOutputDir}');
+        LogService().debug('Cleaned up partial stems directory: $_currentOutputDir');
       }
     }
 
@@ -243,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Map<String, dynamic>> _urlHistory = [];
 
-  AppModel _selectedModel = availableModels.first;
+  final AppModel _selectedModel = availableModels.first;
 
   @override
   void initState() {
@@ -608,7 +608,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // Save to History (local import)
       final id = await HistoryService().insertItem(HistoryItem(
         title: _videoTitle!,
-        url: 'local:${selectedDirectory}',
+        url: 'local:$selectedDirectory',
         directory: selectedDirectory,
         stemNames: _stemNames!,
         stemFiles: foundStems,
@@ -686,7 +686,7 @@ class _MyHomePageState extends State<MyHomePage> {
             label: const Text('Logs'),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.primary,
-              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               shape: const StadiumBorder(),
             ),
           ),
@@ -747,31 +747,24 @@ class _MyHomePageState extends State<MyHomePage> {
               // Process Video Card
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
+                          Icon(Icons.auto_fix_high, size: 20, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Text('PROCESS VIDEO', 
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
                             ),
-                            child: Icon(Icons.auto_fix_high, color: Theme.of(context).colorScheme.primary),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Process Video', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                              Text('Extract stems using AI', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
-                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       RawAutocomplete<Map<String, dynamic>>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           return _urlHistory.where((Map<String, dynamic> option) {
@@ -793,13 +786,15 @@ class _MyHomePageState extends State<MyHomePage> {
                             decoration: InputDecoration(
                               hintText: 'Paste YouTube URL here...',
                               filled: true,
-                              fillColor: Theme.of(context).colorScheme.surface,
+                              fillColor: Theme.of(context).brightness == Brightness.dark 
+                                  ? Theme.of(context).colorScheme.surface 
+                                  : Colors.white.withValues(alpha: 0.5),
                               prefixIcon: const Icon(Icons.link, size: 20),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                             enabled: !_isProcessing,
                             onSubmitted: (_) => _processUrl(),
@@ -838,7 +833,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _urlController.text = selection['url'];
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
@@ -847,22 +842,22 @@ class _MyHomePageState extends State<MyHomePage> {
                               icon: const Icon(Icons.rocket_launch, size: 18),
                               label: const Text('Process'),
                               style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           SizedBox(
-                            width: 56,
-                            height: 56,
+                            width: 48,
+                            height: 48,
                             child: OutlinedButton(
                               onPressed: _isProcessing ? null : _loadLocalStems,
                               style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Icon(Icons.folder_open_outlined),
+                              child: const Icon(Icons.folder_open_outlined, size: 20),
                             ),
                           ),
                         ],

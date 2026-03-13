@@ -27,6 +27,7 @@ All tasks follow a strict lifecycle:
 4. **Implement to Pass Tests (Green Phase):**
    - Write the minimum amount of application code necessary to make the failing tests pass.
    - Run the test suite again and confirm that all tests now pass. This is the "Green" phase.
+   - **CRITICAL:** Ensure that the implementation introduces NO NEW compilation warnings or linting errors.
 
 5. **Refactor (Optional but Recommended):**
    - With the safety of passing tests, refactor the implementation code and the test code to improve clarity, remove duplication, and enhance performance without changing the external behavior.
@@ -250,7 +251,8 @@ A task is complete when:
 2. Unit tests written and passing
 3. Documentation complete (if applicable)
 5. Code passes all configured linting and static analysis checks
-6. Works beautifully on mobile (if applicable)
+6. **NO compilation warnings** (e.g., `flutter analyze` must return 0 issues)
+7. Works beautifully on mobile (if applicable)
 7. Implementation notes recorded for inclusion in phase-end commit
 8. Changes staged for phase-end commit
 9. Plan update committed with proper message

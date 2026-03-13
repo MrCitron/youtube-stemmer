@@ -47,7 +47,7 @@ class _ExportUIState extends State<ExportUI> {
                     ? Theme.of(context).colorScheme.surface 
                     : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
+                border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
               ),
               padding: const EdgeInsets.all(2),
               child: SegmentedButton<ExportFormat>(

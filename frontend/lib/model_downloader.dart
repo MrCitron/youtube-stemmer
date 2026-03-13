@@ -59,7 +59,7 @@ class ModelDownloader {
   Future<String> getModelPath(AppModel model) async {
     final String base;
     if (_basePath != null) {
-      base = _basePath!;
+      base = _basePath;
     } else {
       final directory = await getApplicationSupportDirectory();
       base = directory.path;
