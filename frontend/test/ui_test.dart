@@ -4,16 +4,11 @@ import 'package:youtube_stemmer/main.dart';
 
 void main() {
   testWidgets('Should show initial UI', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: MyHomePage(
-        title: 'YouTube Stemmer',
-        onToggleTheme: () {},
-        themeMode: ThemeMode.dark,
-      ),
-    ));
+    await tester.pumpWidget(const MyApp());
 
-    expect(find.byType(TextField), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Process YouTube'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, 'Load Local Stems'), findsOneWidget);
+    expect(find.text('YouTube Stemmer'), findsAtLeast(1));
+    expect(find.text('Process Video'), findsOneWidget);
+    expect(find.byIcon(Icons.rocket_launch), findsOneWidget);
+    expect(find.text('Paste YouTube URL here...'), findsOneWidget);
   });
 }
