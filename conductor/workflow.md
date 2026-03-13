@@ -53,7 +53,12 @@ All tasks follow a strict lifecycle:
    - **Action:** Read `plan.md`, find the line for the completed task, and update its status from `[~]` to `[x]`.
    - **Action:** Stage and commit the `plan.md` update with a descriptive message (e.g., `conductor(plan): Mark task 'Create user model' as complete`).
 
-### Phase Completion Verification and Checkpointing Protocol
+### Track Completion and Finalization
+
+1. **Verify All Tasks:** Ensure all tasks in the track's local `plan.md` are marked as `[x]`.
+2. **Synchronize Documentation:** Perform the "Synchronize Project Documentation" protocol.
+3. **CRITICAL - Await Authorization:** Even if all tasks are complete and documentation is synchronized, you **MUST NOT** mark the track as `[x] Completed` in the `Tracks Registry` (`conductor/tracks.md`) until the user explicitly tells you to "Mark the track as complete" or "Finalize the track".
+4. **Finalize Registry:** Only after explicit user authorization, update the status in `conductor/tracks.md` to `[x]`, commit the change, and perform any requested cleanup (archiving/deletion).
 
 **Trigger:** This protocol is executed immediately after a task is completed that also concludes a phase in `plan.md`.
 
