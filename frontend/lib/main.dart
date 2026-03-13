@@ -831,6 +831,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       const SizedBox(height: 16),
                       RawAutocomplete<Map<String, dynamic>>(
                         focusNode: _urlFocusNode,
+                        textEditingController: _urlController,
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           return _urlHistory.where((Map<String, dynamic> option) {
                             return option['url'].toString().toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
@@ -839,11 +840,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                         displayStringForOption: (Map<String, dynamic> option) => option['url'],
                         fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
-                          // Update text only if it's different to avoid cursor reset
-                          if (textEditingController.text != _urlController.text) {
-                            textEditingController.text = _urlController.text;
-                          }
-
                           return TextField(
                             controller: textEditingController,
                             focusNode: focusNode,
@@ -861,7 +857,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                             enabled: !_isProcessing,
-                            onChanged: (value) => _urlController.text = value,
                             onSubmitted: (_) => _processUrl(),
                           );
                         },
