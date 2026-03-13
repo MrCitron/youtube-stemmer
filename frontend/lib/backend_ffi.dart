@@ -409,6 +409,22 @@ class BackendFFI {
       return rootBackendPath;
     }
 
+    // 4b. Check in current working directory /backend/
+    final cwdBackendPath = p.join(Directory.current.path, 'backend', libName);
+    if (File(cwdBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $cwdBackendPath');
+      return cwdBackendPath;
+    }
+
+    // 4c. Check in parent directory /backend/ (common for flutter test)
+    final parentBackendPath = p.join(p.dirname(Directory.current.path), 'backend', libName);
+    if (File(parentBackendPath).existsSync()) {
+      // ignore: avoid_print
+      print('FFI: Found $libName at $parentBackendPath');
+      return parentBackendPath;
+    }
+
     final libSubPath = p.join(exeDir, 'lib', libName);
     if (File(libSubPath).existsSync()) {
       // ignore: avoid_print
