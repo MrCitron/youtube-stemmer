@@ -165,8 +165,6 @@ pub extern "C" fn GetEstimatedBPM(path: *const c_char) -> *mut c_char {
     CString::new(final_res).unwrap().into_raw()
 }
 
-use symphonia::core::audio::SampleBuffer;
-
 fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let src = File::open(input_path).map_err(|e| e.to_string())?;
     let mss = MediaSourceStream::new(Box::new(src), Default::default());
@@ -202,7 +200,6 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
     let mut all_samples: Vec<f32> = Vec::new();
     let mut sample_buf = None;
-    let mut total_decoded_frames = 0;
     let mut actual_sample_rate: Option<u32> = None;
     let mut actual_channels: usize = 2;
 
@@ -245,8 +242,8 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
     let num_collected_samples = all_samples.len();
     let num_input_frames = num_collected_samples / actual_channels.max(1);
-    println!("Rust: convert_to_wav: decoded_frames={}, collected_samples={}, frames_calc={}, actual_rate={}Hz",
-             total_decoded_frames, num_collected_samples, num_input_frames, sample_rate);
+    println!("Rust: convert_to_wav: collected_samples={}, frames_calc={}, actual_rate={}Hz",
+             num_collected_samples, num_input_frames, sample_rate);
 
     // Deinterleave: all_samples is [L0,R0,L1,R1,...] → per-channel vecs
     let num_in_ch = actual_channels.max(1);
