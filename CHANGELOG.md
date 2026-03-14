@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - Cross-Platform Stability & Windows Launch
+
+### Added
+- **Windows Support**: Full support for Windows, including automated bundling of `libmpv-2.dll` and early application support directory initialization.
+- **Windows Release Pipeline**: Integrated Windows builds into the automated GitHub Release process.
+
+### Fixed
+- **Windows White Screen**: Resolved a fatal crash caused by missing `libmpv` dependencies during initialization.
+- **macOS Build**: Fixed Flutter embedding issues by ensuring native libraries are correctly placed during the build process.
+- **UI Contrast**: Improved readability of the Log Console by fixing low-contrast buttons in Light mode.
+- **URL Dropdown**: Fixed regressions on macOS and Linux related to Autocomplete synchronization and focus.
+- **CI/CD Reliability**: Upgraded GitHub Actions to v6 to support Node.js 24 and fixed flaky dependency download URLs.
+
+### Improved
+- **Audio Processing**: Refactored the Rust backend to use `SampleBuffer` for reliable decoding and added sample clamping to prevent digital clipping.
+- **Window Management**: Optimized default window size (900px height) to ensure the title bar remains accessible on standard laptop screens.
+
 ## [0.3.0] - Build System & Release Unification
 
 ### Improved

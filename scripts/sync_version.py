@@ -73,4 +73,4 @@ if __name__ == "__main__":
     if os.path.exists(pubspec_path):
         update_pubspec_yaml(pubspec_path, version)
     if os.path.exists(changelog_path):
-        update_changelog(changelog_path, version, date)
+        update_changelog(changelog_path, version, title)
