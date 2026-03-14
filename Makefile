@@ -29,8 +29,23 @@ endif
 frontend:
 	@echo "Building Flutter frontend..."
 ifeq ($(OS), Darwin)
+	@if [ ! -f backend/libonnxruntime.dylib ]; then \
+		echo "Downloading ONNX Runtime for macOS..."; \
+		curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-osx-universal2-1.19.2.tgz -o temp_onnx.tgz; \
+		tar -xzf temp_onnx.tgz; \
+		cp onnxruntime-osx-universal2-1.19.2/lib/libonnxruntime.1.19.2.dylib backend/libonnxruntime.dylib; \
+		rm -rf onnxruntime-osx-universal2-1.19.2 temp_onnx.tgz; \
+	fi
 	cp backend/libbackend.dylib frontend/macos/libbackend.dylib
 	cp backend/libonnxruntime.dylib frontend/macos/libonnxruntime.dylib
+else
+	@if [ "$(OS)" = "Linux" ] && [ ! -f backend/libonnxruntime.so ]; then \
+		echo "Downloading ONNX Runtime for Linux..."; \
+		curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-linux-x64-1.19.2.tgz -o temp_onnx.tgz; \
+		tar -xzf temp_onnx.tgz; \
+		cp onnxruntime-linux-x64-1.19.2/lib/libonnxruntime.so.1.19.2 backend/libonnxruntime.so; \
+		rm -rf onnxruntime-linux-x64-1.19.2 temp_onnx.tgz; \
+	fi
 endif
 	cd frontend && flutter build $(shell python3 -c "import platform; print(platform.system().lower().replace('darwin', 'macos'))") --release
 
