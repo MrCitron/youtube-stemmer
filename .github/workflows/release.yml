@@ -104,33 +104,23 @@ jobs:
           # Handle multi-line output for GITHUB_OUTPUT
           echo "title=$RELEASE_TITLE" >> $GITHUB_OUTPUT
           echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "### $RELEASE_TITLE" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Download Linux Artifact
+      - name: Download Artifacts
         uses: actions/download-artifact@v6
         with:
-          name: linux-build
-
-      - name: Download macOS Artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: macos-build
-
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: windows-build
+          path: artifacts
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ steps.extract_notes.outputs.title }}
+          name: ${{ github.ref_name }}
           body: ${{ steps.extract_notes.outputs.notes }}
-          files: |
-            dist/linux/youtube-stemmer-linux.tar.gz
-            dist/darwin/youtube-stemmer-macos.zip
-            dist/windows/youtube-stemmer-windows.zip
+          files: artifacts/**/*
           generate_release_notes: false
           draft: false
           prerelease: false
