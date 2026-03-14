@@ -10,6 +10,7 @@ use ndarray::Array3;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
+use rubato::{Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction};
 use symphonia::core::audio::Signal;
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
@@ -169,9 +170,9 @@ use symphonia::core::audio::SampleBuffer;
 fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let src = File::open(input_path).map_err(|e| e.to_string())?;
     let mss = MediaSourceStream::new(Box::new(src), Default::default());
-    
+
     let mut hint = Hint::new();
-    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") {
+    if input_path.ends_with(".mp4") || input_path.ends_with(".m4a") || input_path.ends_with(".download") {
         hint.with_extension("mp4");
     } else if input_path.ends_with(".webm") {
         hint.with_extension("mkv");
@@ -193,12 +194,17 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let track_id = track.id;
-    let sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
-    let target_rate = 44100;
+    let declared_sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
+    let target_rate = 44100u32;
+
+    println!("Rust: convert_to_wav: declared_rate={}Hz, target_rate={}Hz", declared_sample_rate, target_rate);
+
 
     let mut all_samples: Vec<f32> = Vec::new();
     let mut sample_buf = None;
     let mut total_decoded_frames = 0;
+    let mut actual_sample_rate: Option<u32> = None;
+    let mut actual_channels: usize = 2;
 
     while let Ok(packet) = format.next_packet() {
         if ABORT.load(Ordering::Relaxed) {
@@ -215,6 +221,12 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
                 if sample_buf.is_none() {
                     let spec = *decoded.spec();
+                    actual_sample_rate = Some(spec.rate);
+                    actual_channels = spec.channels.count();
+                    println!("Rust: Decoder spec: channels={}, rate={}", actual_channels, spec.rate);
+                    if spec.rate != declared_sample_rate {
+                        println!("Rust: WARNING: declared rate {}Hz != actual decoded rate {}Hz (HE-AAC/SBR mismatch?), using actual rate", declared_sample_rate, spec.rate);
+                    }
                     sample_buf = Some(SampleBuffer::<f32>::new(decoded.capacity() as u64, spec));
                 }
 
@@ -228,36 +240,63 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
         }
     }
 
+    // Use actual decoded rate (from spec.rate), not the declared codec_params rate.
+    // For HE-AAC (DASH m4a), codec_params may report the SBR output rate (e.g. 44100)
+    // while symphonia decodes only the base layer at half that rate (e.g. 22050).
+    // Using the wrong rate would skip resampling and produce audio at double speed / half duration.
+    let sample_rate = actual_sample_rate.unwrap_or(declared_sample_rate);
+
     let num_collected_samples = all_samples.len();
-    let num_input_frames = num_collected_samples / 2;
+    let num_input_frames = num_collected_samples / actual_channels.max(1);
+    println!("Rust: convert_to_wav: decoded_frames={}, collected_samples={}, frames_calc={}, actual_rate={}Hz",
+             total_decoded_frames, num_collected_samples, num_input_frames, sample_rate);
 
-    // Resample if needed
-    let final_samples = if sample_rate != target_rate {
-        let ratio = sample_rate as f64 / target_rate as f64;
-        let num_output_frames = (num_input_frames as f64 / ratio) as usize;
-        let mut resampled = Vec::with_capacity(num_output_frames * 2);
+    // Deinterleave: all_samples is [L0,R0,L1,R1,...] → per-channel vecs
+    let num_in_ch = actual_channels.max(1);
+    let mut channels_in: Vec<Vec<f64>> = (0..num_in_ch)
+        .map(|ch| {
+            (0..num_input_frames)
+                .map(|i| all_samples[i * num_in_ch + ch] as f64)
+                .collect()
+        })
+        .collect();
+    // Always output stereo: duplicate mono to both channels if needed
+    if channels_in.len() == 1 {
+        let mono = channels_in[0].clone();
+        channels_in.push(mono);
+    }
 
-        for i in 0..num_output_frames {
-            let pos = i as f64 * ratio;
-            let idx = pos as usize;
-            let frac = pos - idx as f64;
-
-            if idx + 1 >= num_input_frames {
-                for ch in 0..2 {
-                    resampled.push(all_samples[idx * 2 + ch]);
-                }
-                continue;
-            }
-
-            for ch in 0..2 {
-                let s1 = all_samples[idx * 2 + ch];
-                let s2 = all_samples[(idx + 1) * 2 + ch];
-                resampled.push(s1 * (1.0 - frac as f32) + s2 * frac as f32);
-            }
-        }
-        resampled
+    // Resample if needed using high-quality sinc interpolation
+    let stereo_f64: [Vec<f64>; 2] = if sample_rate != target_rate {
+        println!("Rust: Resampling from {}Hz to {}Hz (sinc)...", sample_rate, target_rate);
+        let params = SincInterpolationParameters {
+            sinc_len: 256,
+            f_cutoff: 0.95,
+            interpolation: SincInterpolationType::Linear,
+            oversampling_factor: 256,
+            window: WindowFunction::BlackmanHarris2,
+        };
+        let ratio = target_rate as f64 / sample_rate as f64;
+        let mut resampler = SincFixedIn::<f64>::new(
+            ratio,
+            2.0,
+            params,
+            num_input_frames,
+            2,
+        ).map_err(|e| format!("Resampler init failed: {}", e))?;
+        let out = resampler.process(&[&channels_in[0], &channels_in[1]], None)
+            .map_err(|e| format!("Resampler failed: {}", e))?;
+        [out[0].clone(), out[1].clone()]
     } else {
-        all_samples
+        [channels_in[0].clone(), channels_in[1].clone()]
+    };
+
+    // Reinterleave back to [L0,R0,L1,R1,...]
+    let out_frames = stereo_f64[0].len();
+    let mut final_samples = Vec::with_capacity(out_frames * 2);
+    for i in 0..out_frames {
+        final_samples.push(stereo_f64[0][i] as f32);
+        final_samples.push(stereo_f64[1][i] as f32);
     };
 
     let spec = hound::WavSpec {
@@ -294,14 +333,22 @@ pub extern "C" fn DownloadAudio(url: *const c_char, output_path: *const c_char, 
         }
 
         let download_path = out_str.clone() + ".download";
-        
+
+        // Remove any stale file from a previous run to force a fresh download.
+        for ext in &["", ".m4a", ".webm", ".opus", ".mp3", ".mp4"] {
+            let _ = std::fs::remove_file(format!("{}{}", download_path, ext));
+        }
+
         println!("Rust: Starting download via yt-dlp for {}", url_str);
 
         let mut child = Command::new(get_ytdlp_path())
             .arg("-f")
-            .arg("ba/best")
+            // Only allow m4a (AAC, symphonia-compatible) or mp4 fallback.
+            // webm/opus must be excluded — symphonia has no opus codec.
+            // android_vr client exposes DASH m4a (format 140: AAC-LC 129k 44kHz) without PO tokens.
+            .arg("bestaudio[ext=m4a]/best[ext=mp4]")
             .arg("--extractor-args")
-            .arg("youtube:player_client=ios,web,android")
+            .arg("youtube:player_client=android_vr,web")
             .arg("--no-playlist")
             .arg("-o")
             .arg(&download_path)

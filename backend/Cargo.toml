@@ -18,3 +18,5 @@ ndarray = "0.17"
 url = "2.5"
 tokio = { version = "1.36", features = ["full"] }
 ureq = { version = "2.9", features = ["json", "native-certs"] }
+rubato = "0.16"
+
