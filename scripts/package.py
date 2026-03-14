@@ -24,7 +24,7 @@ YTDLP_URLS = {
 }
 
 # libmpv for Windows (required by media_kit)
-MPV_URL_WINDOWS = "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-20250119-git-557348a.7z/download"
+MPV_URL_WINDOWS = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260307/mpv-dev-x86_64-20260307-git-f9190e5.7z"
 
 def get_version(is_release=False):
     """Extracts version from VERSION file or fallback to CHANGELOG.md."""
