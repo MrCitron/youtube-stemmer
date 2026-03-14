@@ -570,6 +570,7 @@ class _MyHomePageState extends State<MyHomePage> {
               createdAt: DateTime.now(),
             );
             final id = await HistoryService().insertItem(newItem);
+            await HistoryService().insertUrlHistory(url, title);
 
             setState(() {
               _stemsDirectory = outputDir;
