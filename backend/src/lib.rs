@@ -196,8 +196,6 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
     let sample_rate = track.codec_params.sample_rate.ok_or("Unknown sample rate")?;
     let target_rate = 44100;
 
-    println!("Rust: convert_to_wav: input_rate={}Hz, target_rate={}Hz", sample_rate, target_rate);
-
     let mut all_samples: Vec<f32> = Vec::new();
     let mut sample_buf = None;
     let mut total_decoded_frames = 0;
@@ -217,7 +215,6 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
                 if sample_buf.is_none() {
                     let spec = *decoded.spec();
-                    println!("Rust: Decoder spec: channels={}, rate={}", spec.channels.count(), spec.rate);
                     sample_buf = Some(SampleBuffer::<f32>::new(decoded.capacity() as u64, spec));
                 }
 
@@ -233,12 +230,9 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
     let num_collected_samples = all_samples.len();
     let num_input_frames = num_collected_samples / 2;
-    println!("Rust: convert_to_wav: decoded_frames={}, collected_samples={}, frames_calc={}", 
-             total_decoded_frames, num_collected_samples, num_input_frames);
 
     // Resample if needed
     let final_samples = if sample_rate != target_rate {
-        println!("Rust: Resampling from {}Hz to {}Hz...", sample_rate, target_rate);
         let ratio = sample_rate as f64 / target_rate as f64;
         let num_output_frames = (num_input_frames as f64 / ratio) as usize;
         let mut resampled = Vec::with_capacity(num_output_frames * 2);
@@ -261,7 +255,6 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
                 resampled.push(s1 * (1.0 - frac as f32) + s2 * frac as f32);
             }
         }
-        println!("Rust: Resampling complete: {} output frames", num_output_frames);
         resampled
     } else {
         all_samples
@@ -577,8 +570,6 @@ pub extern "C" fn SplitAudio(
         let samples: Vec<f32> = reader.samples::<i16>().map(|s| s.unwrap() as f32 / 32767.0).collect();
         let num_channels = spec.channels as usize;
         let num_frames = samples.len() / num_channels;
-
-        println!("Rust: SplitAudio: input frames={}, channels={}, rate={}", num_frames, num_channels, spec.sample_rate);
 
         let chunk_size = 343980;
         let num_chunks = (num_frames + chunk_size - 1) / chunk_size;

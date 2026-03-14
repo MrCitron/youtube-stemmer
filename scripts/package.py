@@ -24,7 +24,7 @@ YTDLP_URLS = {
 }
 
 # libmpv for Windows (required by media_kit)
-MPV_URL_WINDOWS = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20250102/libmpv-v3-x86_64-20250102-git-557348a.zip"
+MPV_URL_WINDOWS = "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-20250119-git-557348a.7z/download"
 
 def get_version(is_release=False):
     """Extracts version from VERSION file or fallback to CHANGELOG.md."""
@@ -60,6 +60,11 @@ def extract_archive(archive_path, extract_to):
     elif archive_path.endswith(".zip"):
         with zipfile.ZipFile(archive_path, "r") as zip_ref:
             zip_ref.extractall(extract_to)
+    elif archive_path.endswith(".7z") or "download" in archive_path:
+        # Use 7z command line (available on windows and ubuntu runners)
+        if not os.path.exists(extract_to):
+            os.makedirs(extract_to)
+        subprocess.run(["7z", "x", archive_path, f"-o{extract_to}", "-y"], check=True)
 
 def find_file(directory, filename):
     for root, dirs, files in os.walk(directory):
@@ -191,7 +196,7 @@ def package():
         mpv_dll = os.path.join(bundle_dir, "libmpv-2.dll")
         if not os.path.exists(mpv_dll):
             print("Downloading libmpv for Windows...")
-            archive_path = os.path.join(temp_dir, "mpv.zip")
+            archive_path = os.path.join(temp_dir, "mpv.7z")
             download_file(MPV_URL_WINDOWS, archive_path)
             extract_dir = os.path.join(temp_dir, "mpv_extracted")
             extract_archive(archive_path, extract_dir)
