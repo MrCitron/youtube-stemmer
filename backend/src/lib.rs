@@ -4,6 +4,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{Read, BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
+<<<<<<< HEAD
 use ort::session::Session;
 use ort::value::Value;
 use ndarray::Array3;
@@ -12,10 +13,13 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use rubato::{Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction};
 use symphonia::core::audio::Signal;
+=======
+>>>>>>> ee7cf5e (fix: resolve macOS build issue and cleanup compilation warnings)
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
+use symphonia::core::audio::SampleBuffer;
 
 mod tempo;
 mod click_gen;
@@ -202,9 +206,12 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
     let mut all_samples: Vec<f32> = Vec::new();
     let mut sample_buf = None;
+<<<<<<< HEAD
     let mut total_decoded_frames = 0;
     let mut actual_sample_rate: Option<u32> = None;
     let mut actual_channels: usize = 2;
+=======
+>>>>>>> ee7cf5e (fix: resolve macOS build issue and cleanup compilation warnings)
 
     while let Ok(packet) = format.next_packet() {
         if ABORT.load(Ordering::Relaxed) {
@@ -216,9 +223,6 @@ fn convert_to_wav(input_path: &str, output_path: &str) -> Result<(), String> {
 
         match decoder.decode(&packet) {
             Ok(decoded) => {
-                let frames = decoded.frames();
-                total_decoded_frames += frames;
-
                 if sample_buf.is_none() {
                     let spec = *decoded.spec();
                     actual_sample_rate = Some(spec.rate);

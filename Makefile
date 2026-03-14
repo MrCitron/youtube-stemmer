@@ -28,6 +28,10 @@ endif
 
 frontend:
 	@echo "Building Flutter frontend..."
+ifeq ($(OS), Darwin)
+	cp backend/libbackend.dylib frontend/macos/libbackend.dylib
+	cp backend/libonnxruntime.dylib frontend/macos/libonnxruntime.dylib
+endif
 	cd frontend && flutter build $(shell python3 -c "import platform; print(platform.system().lower().replace('darwin', 'macos'))") --release
 
 package:
