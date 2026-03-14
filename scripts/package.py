@@ -23,6 +23,9 @@ YTDLP_URLS = {
     "Windows": "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
 }
 
+# libmpv for Windows (required by media_kit)
+MPV_URL_WINDOWS = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20250102/libmpv-v3-x86_64-20250102-git-557348a.zip"
+
 def get_version(is_release=False):
     """Extracts version from VERSION file or fallback to CHANGELOG.md."""
     version = "unknown"
@@ -183,6 +186,21 @@ def package():
 
         shutil.copy2("backend/onnxruntime.dll", bundle_dir)
         shutil.copy2("backend/yt-dlp.exe", bundle_dir)
+
+        # libmpv-2.dll
+        mpv_dll = os.path.join(bundle_dir, "libmpv-2.dll")
+        if not os.path.exists(mpv_dll):
+            print("Downloading libmpv for Windows...")
+            archive_path = os.path.join(temp_dir, "mpv.zip")
+            download_file(MPV_URL_WINDOWS, archive_path)
+            extract_dir = os.path.join(temp_dir, "mpv_extracted")
+            extract_archive(archive_path, extract_dir)
+            found_dll = find_file(extract_dir, "libmpv-2.dll")
+            if found_dll:
+                shutil.copy2(found_dll, bundle_dir)
+            else:
+                print("Error: Could not find libmpv-2.dll in extracted archive.")
+                sys.exit(1)
 
         # Archive
         if args.output_name:
