@@ -30,16 +30,15 @@ void main() async {
 
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(
-      size: Size(600, 1100),
+      size: Size(600, 900),
       center: true,
       title: 'YouTube Stemmer',
     );
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
-      await windowManager.setMinimumSize(const Size(600, 800));
+      await windowManager.setMinimumSize(const Size(600, 700));
     });
-
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
